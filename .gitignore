@@ -1,0 +1,12 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/MyFinances.Domain/bin/Debug/net8.0
+/.vs
+/MyFinances.Domain/obj
+/MyFinances.Logic/bin/Debug/net8.0
+/MyFinances.Logic/obj
+/MyFinancesApp/bin/Debug/net8.0
+/MyFinancesApp/obj
+/obj
