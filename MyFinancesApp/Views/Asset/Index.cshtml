@@ -61,70 +61,71 @@
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
-            let currentPage = 1;
-            const perPage = 10;
+        let currentPage = 1;
+        const perPage = 10;
 
-            function loadAssets(page = 1) {
-                $.get('@Url.Action("Grid", "Asset")', { page: page, perPage: perPage })
-                    .done(function(response) {
-                        const tbody = $('#assets-table tbody');
-                        tbody.empty();
+        function loadAssets(page = 1) {
+            $.get('@Url.Action("Grid", "Asset")', { page: page, perPage: perPage })
+                .done(function(response) {
+                    const tbody = $('#assets-table tbody');
+                    tbody.empty();
 
-                        response.data.forEach(function(asset) {
-                            tbody.append(`
-                                <tr>
-                                    <td>${asset.id}</td>
-                                    <td><strong>${asset.ticker}</strong></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info" onclick="viewAsset(${asset.id})">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `);
-                        });
-
-                        updatePagination(response.total, page);
-                    })
-                    .fail(function() {
-                        alert('Error al cargar los assets');
+                    response.data.forEach(function(asset) {
+                        tbody.append(`
+                            <tr>
+                                <td>${asset.id}</td>
+                                <td><strong>${asset.ticker}</strong></td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" onclick="viewAsset(${asset.id})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
                     });
+
+                    updatePagination(response.total, page);
+                })
+                .fail(function() {
+                    alert('Error al cargar los assets');
+                });
+        }
+
+        function updatePagination(total, currentPage) {
+            const totalPages = Math.ceil(total / perPage);
+            const pagination = $('#pagination');
+            pagination.empty();
+
+            // Botón anterior
+            if (currentPage > 1) {
+                pagination.append(`
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="loadAssets(${currentPage - 1})">Anterior</a>
+                    </li>
+                `);
             }
 
-            function updatePagination(total, currentPage) {
-                const totalPages = Math.ceil(total / perPage);
-                const pagination = $('#pagination');
-                pagination.empty();
-
-                // Botón anterior
-                if (currentPage > 1) {
-                    pagination.append(`
-                        <li class="page-item">
-                            <a class="page-link" href="#" onclick="loadAssets(${currentPage - 1})">Anterior</a>
-                        </li>
-                    `);
-                }
-
-                // Números de página
-                for (let i = 1; i <= totalPages; i++) {
-                    const active = i === currentPage ? 'active' : '';
-                    pagination.append(`
-                        <li class="page-item ${active}">
-                            <a class="page-link" href="#" onclick="loadAssets(${i})">${i}</a>
-                        </li>
-                    `);
-                }
-
-                // Botón siguiente
-                if (currentPage < totalPages) {
-                    pagination.append(`
-                        <li class="page-item">
-                            <a class="page-link" href="#" onclick="loadAssets(${currentPage + 1})">Siguiente</a>
-                        </li>
-                    `);
-                }
+            // Números de página
+            for (let i = 1; i <= totalPages; i++) {
+                const active = i === currentPage ? 'active' : '';
+                pagination.append(`
+                    <li class="page-item ${active}">
+                        <a class="page-link" href="#" onclick="loadAssets(${i})">${i}</a>
+                    </li>
+                `);
             }
+
+            // Botón siguiente
+            if (currentPage < totalPages) {
+                pagination.append(`
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="loadAssets(${currentPage + 1})">Siguiente</a>
+                    </li>
+                `);
+            }
+        }
+
+        $(document).ready(function() {
 
             // Cargar assets al iniciar
             loadAssets();
