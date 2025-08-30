@@ -21,11 +21,36 @@ public class PortfolioController(IPortfolioReportService portfolioReportService)
         try
         {
             var data = await _portfolioReportService.GetPortfolioReportAsync(request.FechaInicio, request.FechaFin);
-            return Json(new { success = true, data = data });
+            return Json(new { success = true, data });
         }
         catch (Exception ex)
         {
             return Json(new { success = false, error = ex.Message });
+        }
+    }
+
+    public async Task<IActionResult> MonthlyReport()
+    {
+        var model = new PortfolioReportRequestViewModel
+        {
+            FechaInicio = DateTime.Now.AddMonths(-12),
+            FechaFin = DateTime.Now
+        };
+
+        return View(model);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> GetMonthlyReportData([FromBody] PortfolioReportRequestViewModel model)
+    {
+        try
+        {
+            var data = await _portfolioReportService.GetMonthlyPortfolioReportAsync(model.FechaInicio, model.FechaFin);
+            return Json(new { success = true, data });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, error = "Error al generar el reporte: " + ex.Message });
         }
     }
 }

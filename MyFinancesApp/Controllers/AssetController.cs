@@ -7,7 +7,6 @@ namespace MyFinancesApp.Controllers;
 public class AssetController(IAssetService assetService, IHistoricService historicService) : Controller
 {
     private readonly IAssetService _assetService = assetService;
-    private readonly IHistoricService _historicService = historicService;
 
     [HttpGet]
     public IActionResult Index()

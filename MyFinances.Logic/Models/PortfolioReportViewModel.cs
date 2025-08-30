@@ -19,3 +19,16 @@ public class PortfolioReportRequestViewModel
     public DateTime FechaInicio { get; set; } = DateTime.Today.AddMonths(-1);
     public DateTime FechaFin { get; set; } = DateTime.Today;
 }
+
+public class MonthlyPortfolioReportViewModel
+{
+    public string Mes { get; set; }
+    public decimal TenenciaInicial { get; set; }
+    public decimal TenenciaFinal { get; set; }
+    public decimal GananciaPerdidaUsd { get; set; }
+    public decimal Compras { get; set; }
+    public decimal Ventas { get; set; }
+    public decimal InversionNeta { get; set; }
+    public decimal PorcentajeGananciaPerdida { get; set; }
+    public decimal SP500Rendimiento { get; set; }
+}

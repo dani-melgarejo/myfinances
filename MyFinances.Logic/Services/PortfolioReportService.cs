@@ -6,16 +6,10 @@ using MyFinances.Logic.Models;
 
 namespace MyFinances.Logic.Services;
 
-public class PortfolioReportService : IPortfolioReportService
+public class PortfolioReportService(ApplicationDbContext context, ILogger<PortfolioReportService> logger) : IPortfolioReportService
 {
-    private readonly ApplicationDbContext _context;
-    private readonly ILogger<PortfolioReportService> _logger;
-
-    public PortfolioReportService(ApplicationDbContext context, ILogger<PortfolioReportService> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
+    private readonly ApplicationDbContext _context = context;
+    private readonly ILogger<PortfolioReportService> _logger = logger;
 
     public async Task<IEnumerable<PortfolioReportViewModel>> GetPortfolioReportAsync(DateTime fechaInicio, DateTime fechaFin)
     {
@@ -161,6 +155,126 @@ public class PortfolioReportService : IPortfolioReportService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generando reporte de portafolio");
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<MonthlyPortfolioReportViewModel>> GetMonthlyPortfolioReportAsync(DateTime fechaInicio, DateTime fechaFin)
+    {
+        try
+        {
+            var sql = @"
+            DECLARE @fecha_inicio DATE = {0};
+            DECLARE @fecha_fin DATE = {1};
+ 
+            WITH MonthlyData AS (
+                SELECT 
+                    CONVERT(VARCHAR(7), p.Date, 120) AS Mes,
+                    MIN(p.Date) AS PrimerDiaMes,
+                    MAX(p.Date) AS UltimoDiaMes,
+                    DATEADD(DAY, -1, MIN(p.Date)) AS UltimoDiaMesAnterior
+                FROM Possessions p
+                WHERE p.Date >= @fecha_inicio AND p.Date <= @fecha_fin
+                GROUP BY CONVERT(VARCHAR(7), p.Date, 120)
+            ),
+            SP500MonthlyData AS (
+                SELECT 
+                    md.Mes,
+                    (SELECT TOP 1 sd_inicial.[Close] 
+                     FROM Stocks_Data sd_inicial
+                     INNER JOIN Assets a_inicial ON sd_inicial.asset_id = a_inicial.Id
+                     WHERE a_inicial.Ticker = '^GSPC' 
+                     AND sd_inicial.Date < md.PrimerDiaMes
+                     ORDER BY sd_inicial.Date DESC) AS SP500Inicial,
+            
+                    (SELECT TOP 1 sd_final.[Close] 
+                     FROM Stocks_Data sd_final
+                     INNER JOIN Assets a_final ON sd_final.asset_id = a_final.Id
+                     WHERE a_final.Ticker = '^GSPC' 
+                     AND sd_final.Date <= md.UltimoDiaMes
+                     ORDER BY sd_final.Date DESC) AS SP500Final
+                FROM MonthlyData md
+            ),
+            PortfolioMonthlyData AS (
+                SELECT 
+                    md.Mes,
+                    (SELECT TOP 1 SUM(p_inicial.TotalPrice)
+                     FROM Possessions p_inicial
+                     WHERE p_inicial.Date <= md.UltimoDiaMesAnterior
+                     GROUP BY p_inicial.Date
+                     ORDER BY p_inicial.Date DESC) AS TenenciaInicial,
+                    
+                    (SELECT SUM(p_final.TotalPrice)
+                     FROM Possessions p_final
+                     WHERE p_final.Date = md.UltimoDiaMes) AS TenenciaFinal,
+                    
+                    (SELECT SUM(CASE WHEN m.Operation = 0 THEN m.Quantity * m.Price ELSE 0 END)
+                     FROM Movements m
+                     WHERE CONVERT(VARCHAR(7), m.Date, 120) = md.Mes) AS Compras,
+                    
+                    (SELECT SUM(CASE WHEN m.Operation = 1 THEN m.Quantity * m.Price ELSE 0 END)
+                     FROM Movements m
+                     WHERE CONVERT(VARCHAR(7), m.Date, 120) = md.Mes) AS Ventas,
+                    
+                    (SELECT SUM(CASE WHEN m.Operation = 0 THEN m.Quantity * m.Price ELSE -m.Quantity * m.Price END)
+                     FROM Movements m
+                     WHERE CONVERT(VARCHAR(7), m.Date, 120) = md.Mes) AS InversionNeta
+                FROM MonthlyData md
+            ),
+            SP500Performance AS (
+                SELECT 
+                    sp.Mes,
+                    sp.SP500Inicial,
+                    sp.SP500Final,
+                    CASE 
+                        WHEN sp.SP500Inicial > 0 THEN 
+                            ((sp.SP500Final - sp.SP500Inicial) / sp.SP500Inicial) * 100
+                        ELSE 0 
+                    END AS SP500Rendimiento
+                FROM SP500MonthlyData sp
+            ),
+            MonthlyResults AS (
+                SELECT 
+                    pm.Mes,
+                    ISNULL(pm.TenenciaInicial, 0) AS TenenciaInicial,
+                    ISNULL(pm.TenenciaFinal, 0) AS TenenciaFinal,
+                    ISNULL(pm.TenenciaFinal, 0) - ISNULL(pm.TenenciaInicial, 0) - ISNULL(pm.InversionNeta, 0) AS GananciaPerdidaUsd,
+                    ISNULL(pm.Compras, 0) AS Compras,
+                    ISNULL(pm.Ventas, 0) AS Ventas,
+                    ISNULL(pm.InversionNeta, 0) AS InversionNeta,
+                    CASE 
+                        WHEN ISNULL(pm.TenenciaInicial, 0) + ISNULL(pm.InversionNeta, 0) > 0 THEN 
+                            ((ISNULL(pm.TenenciaFinal, 0) - ISNULL(pm.TenenciaInicial, 0) - ISNULL(pm.InversionNeta, 0)) * 100) / 
+                            (ISNULL(pm.TenenciaInicial, 0) + ISNULL(pm.InversionNeta, 0))
+                        ELSE 0 
+                    END AS PorcentajeGananciaPerdida,
+                    ISNULL(sp.SP500Rendimiento, 0) AS SP500Rendimiento
+                FROM PortfolioMonthlyData pm
+                LEFT JOIN SP500Performance sp ON pm.Mes = sp.Mes
+            )
+
+            SELECT 
+                Mes,
+                TenenciaInicial,
+                TenenciaFinal,
+                GananciaPerdidaUsd,
+                Compras,
+                Ventas,
+                InversionNeta,
+                PorcentajeGananciaPerdida,
+                SP500Rendimiento
+            FROM MonthlyResults
+            ORDER BY Mes";
+
+            var results = await _context.Database
+                .SqlQueryRaw<MonthlyPortfolioReportViewModel>(sql, fechaInicio.Date, fechaFin.Date)
+                .ToListAsync();
+
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generando reporte mensual de portafolio");
             throw;
         }
     }
