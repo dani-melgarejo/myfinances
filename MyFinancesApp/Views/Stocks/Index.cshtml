@@ -1,0 +1,862 @@
+﻿@model MyFinances.Logic.Models.StockMovementFilterViewModel
+
+@{
+    ViewData["Title"] = "Operaciones";
+}
+
+<div class="row">
+    <div class="col-12">
+        <h2>📈 Operaciones de Stocks</h2>
+
+        <!-- Filtros -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    🔍 Filtros
+                    <button class="btn btn-sm btn-outline-secondary float-end" type="button" id="btn-clear-filters">
+                        ❌ Limpiar
+                    </button>
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="filter-form">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label for="assetSelect" class="form-label">Asset</label>
+                                <select class="form-control select2" id="assetSelect" name="AssetId">
+                                    <option value="">Todos los assets...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label for="tickerFilter" class="form-label">Ticker</label>
+                                <input type="text" class="form-control" id="tickerFilter" name="Ticker"
+                                       placeholder="Ej: AAPL" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label for="operationFilter" class="form-label">Operación</label>
+                                <select class="form-control" id="operationFilter" name="Operation">
+                                    <option value="">Todas</option>
+                                    <option value="0">Compra</option>
+                                    <option value="1">Venta</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label for="typeFilter" class="form-label">Tipo</label>
+                                <select class="form-control" id="typeFilter" name="Type">
+                                    <option value="">Todos</option>
+                                    <option value="STOCK">Acción</option>
+                                    <option value="CRYPTO">Criptomoneda</option>
+                                    <option value="BOND">Bono</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label for="fechaDesde" class="form-label">Fecha Desde</label>
+                                <input type="date" class="form-control" id="fechaDesde" name="FechaDesde"
+                                       value="@Model.FechaDesde?.ToString("yyyy-MM-dd")" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label for="fechaHasta" class="form-label">Fecha Hasta</label>
+                                <input type="date" class="form-control" id="fechaHasta" name="FechaHasta"
+                                       value="@Model.FechaHasta?.ToString("yyyy-MM-dd")" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label for="pageSize" class="form-label">Registros por página</label>
+                                <select class="form-control" id="pageSize" name="PageSize">
+                                    <option value="10">10</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div>
+                                    <button type="button" id="btn-search" class="btn btn-primary w-100">
+                                        🔍 Buscar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Resumen -->
+        <div class="row mb-4" id="summary-cards" style="display: none;">
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">💰 Total Invertido</h6>
+                        <h4 id="total-invested">$0.00</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">💸 Total Vendido</h6>
+                        <h4 id="total-sold">$0.00</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">📊 Inversión Neta</h6>
+                        <h4 id="net-investment">$0.00</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">📈 Total Operaciones</h6>
+                        <h4 id="total-operations">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="text-center d-none">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Cargando operaciones...</p>
+        </div>
+
+        <!-- Tabla de resultados -->
+        <div id="data-container">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        📊 Operaciones
+                        <span id="total-records" class="badge bg-secondary ms-2">0</span>
+                    </h5>
+                    <div>
+                        <a asp-action="CreateOrEdit" class="btn btn-success btn-sm me-2">
+                            ➕ Nueva Operación
+                        </a>
+                        <button id="btn-export" class="btn btn-info btn-sm" disabled>
+                            📄 Exportar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0" id="movements-table">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th data-sort="ticker">
+                                        📊 Ticker <span class="sort-icon">↕️</span>
+                                    </th>
+                                    <th data-sort="operation">
+                                        🔄 Operación <span class="sort-icon">↕️</span>
+                                    </th>
+                                    <th data-sort="date">
+                                        📅 Fecha <span class="sort-icon">↕️</span>
+                                    </th>
+                                    <th data-sort="quantity" class="text-end">
+                                        📦 Cantidad <span class="sort-icon">↕️</span>
+                                    </th>
+                                    <th data-sort="price" class="text-end">
+                                        💰 Precio <span class="sort-icon">↕️</span>
+                                    </th>
+                                    <th class="text-end">
+                                        💵 Valor Total
+                                    </th>
+                                    <th data-sort="type">
+                                        🏷️ Tipo <span class="sort-icon">↕️</span>
+                                    </th>
+                                    <th class="text-center">⚙️ Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Los datos se cargarán dinámicamente aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div id="pagination-info" class="text-muted">
+                                <!-- Información de paginación -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <nav aria-label="Paginación">
+                                <ul class="pagination pagination-sm justify-content-end mb-0" id="pagination">
+                                    <!-- Paginación se generará dinámicamente -->
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensaje de error -->
+        <div id="error-message" class="alert alert-danger d-none" role="alert">
+            <!-- El mensaje de error se mostrará aquí -->
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            let currentData = [];
+            let currentFilter = {
+                page: 1,
+                pageSize: 25,
+                sortBy: 'date',
+                sortDirection: 'desc'
+            };
+
+            // Inicializar Select2 para assets
+            $('#assetSelect').select2({
+                placeholder: 'Buscar asset...',
+                allowClear: true,
+                minimumInputLength: 0,
+                ajax: {
+                    url: '@Url.Action("Search", "Asset")',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term || ''
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            // Event handlers
+            $('#btn-search').click(function() {
+                currentFilter.page = 1;
+                loadData();
+            });
+
+            $('#btn-clear-filters').click(function() {
+                $('#filter-form')[0].reset();
+                $('#assetSelect').val(null).trigger('change');
+                $('#fechaDesde').val('@Model.FechaDesde?.ToString("yyyy-MM-dd")');
+                $('#fechaHasta').val('@Model.FechaHasta?.ToString("yyyy-MM-dd")');
+                currentFilter.page = 1;
+                loadData();
+            });
+
+            $('#btn-export').click(function() {
+                exportToExcel();
+            });
+
+            $('#pageSize').change(function() {
+                currentFilter.pageSize = parseInt($(this).val());
+                currentFilter.page = 1;
+                loadData();
+            });
+
+            // Sorting
+            $('#movements-table th[data-sort]').click(function() {
+                const sortBy = $(this).data('sort');
+
+                if (currentFilter.sortBy === sortBy) {
+                    currentFilter.sortDirection = currentFilter.sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentFilter.sortBy = sortBy;
+                    currentFilter.sortDirection = 'asc';
+                }
+
+                updateSortIcons();
+                currentFilter.page = 1;
+                loadData();
+            });
+
+            function updateSortIcons() {
+                $('#movements-table th[data-sort]').removeClass('sort-asc sort-desc');
+
+                const currentHeader = $(`#movements-table th[data-sort="${currentFilter.sortBy}"]`);
+
+                if (currentFilter.sortDirection === 'asc') {
+                    currentHeader.addClass('sort-asc');
+                } else {
+                    currentHeader.addClass('sort-desc');
+                }
+            }
+
+            function loadData() {
+                const filterData = {
+                    assetId: $('#assetSelect').val() || null,
+                    ticker: $('#tickerFilter').val() || null,
+                    operation: $('#operationFilter').val() || null,
+                    type: $('#typeFilter').val() || null,
+                    fechaDesde: $('#fechaDesde').val() || null,
+                    fechaHasta: $('#fechaHasta').val() || null,
+                    page: currentFilter.page,
+                    pageSize: currentFilter.pageSize,
+                    sortBy: currentFilter.sortBy,
+                    sortDirection: currentFilter.sortDirection
+                };
+
+                $('#loading').removeClass('d-none');
+                $('#data-container').addClass('d-none');
+                $('#error-message').addClass('d-none');
+                $('#summary-cards').hide();
+
+                $.ajax({
+                    url: '@Url.Action("GetData", "Stocks")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(filterData),
+                    success: function(response) {
+                        $('#loading').addClass('d-none');
+
+                        if (response.success) {
+                            currentData = response.data.data;
+                            displayData(response.data);
+                            updateSummary(response.data);
+                            $('#btn-export').prop('disabled', currentData.length === 0);
+                        } else {
+                            showError(response.error || 'Error desconocido');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $('#loading').addClass('d-none');
+                        showError('Error al cargar los datos: ' + error);
+                    }
+                });
+            }
+
+            function displayData(result) {
+                const tbody = $('#movements-table tbody');
+                tbody.empty();
+
+                if (result.data.length === 0) {
+                    tbody.append(`
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                📭<br>
+                                No se encontraron operaciones con los filtros aplicados
+                            </td>
+                        </tr>
+                    `);
+                } else {
+                    result.data.forEach(function(item) {
+                        const operationBadge = item.operation === 0
+                            ? '<span class="badge bg-success">🛒 Compra</span>'
+                            : '<span class="badge bg-danger">💸 Venta</span>';
+
+                        const typeBadge = getTypeBadge(item.type);
+
+                        const row = `
+                            <tr>
+                                <td><strong>${item.ticker}</strong></td>
+                                <td>${operationBadge}</td>
+                                <td>${formatDate(item.date)}</td>
+                                <td class="text-end">${formatNumber(item.quantity, 8)}</td>
+                                <td class="text-end">$${formatNumber(item.price, 4)}</td>
+                                <td class="text-end"><strong>$${formatNumber(item.totalValue, 2)}</strong></td>
+                                <td>${typeBadge}</td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-outline-primary btn-icon" onclick="editMovement(${item.id})" title="Editar">
+                                            ✏️
+                                        </button>
+                                        <button class="btn btn-outline-info btn-icon" onclick="viewDetails(${item.id})" title="Ver detalles">
+                                            👁️
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-icon" onclick="deleteMovement(${item.id})" title="Eliminar">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.append(row);
+                    });
+                }
+
+                updatePagination(result);
+                updateSortIcons();
+                $('#data-container').removeClass('d-none');
+            }
+
+           <!-- Views/Stocks/Index.cshtml - CONTINUACIÓN -->
+
+            function updateSummary(result) {
+                $('#total-invested').text('$' + formatNumber(result.totalInvested, 2));
+                $('#total-sold').text('$' + formatNumber(result.totalSold, 2));
+                $('#net-investment').text('$' + formatNumber(result.netInvestment, 2));
+                $('#total-operations').text(result.total);
+
+                // Cambiar color de inversión neta según si es positiva o negativa
+                const netCard = $('#net-investment').closest('.card');
+                netCard.removeClass('bg-warning bg-success bg-danger');
+
+                if (result.netInvestment > 0) {
+                    netCard.addClass('bg-success');
+                } else if (result.netInvestment < 0) {
+                    netCard.addClass('bg-danger');
+                } else {
+                    netCard.addClass('bg-warning');
+                }
+
+                $('#summary-cards').show();
+            }
+
+            function updatePagination(result) {
+                $('#total-records').text(result.total);
+
+                const start = (result.page - 1) * result.pageSize + 1;
+                const end = Math.min(result.page * result.pageSize, result.total);
+                $('#pagination-info').text(`Mostrando ${start} a ${end} de ${result.total} registros`);
+
+                const pagination = $('#pagination');
+                pagination.empty();
+
+                if (result.totalPages <= 1) return;
+
+                // Botón anterior
+                if (result.page > 1) {
+                    pagination.append(`
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="goToPage(${result.page - 1})">
+                                ⬅️
+                            </a>
+                        </li>
+                    `);
+                }
+
+                // Números de página
+                const startPage = Math.max(1, result.page - 2);
+                const endPage = Math.min(result.totalPages, result.page + 2);
+
+                if (startPage > 1) {
+                    pagination.append(`<li class="page-item"><a class="page-link" href="#" onclick="goToPage(1)">1</a></li>`);
+                    if (startPage > 2) {
+                        pagination.append(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const active = i === result.page ? 'active' : '';
+                    pagination.append(`
+                        <li class="page-item ${active}">
+                            <a class="page-link" href="#" onclick="goToPage(${i})">${i}</a>
+                        </li>
+                    `);
+                }
+
+                if (endPage < result.totalPages) {
+                    if (endPage < result.totalPages - 1) {
+                        pagination.append(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+                    }
+                    pagination.append(`<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${result.totalPages})">${result.totalPages}</a></li>`);
+                }
+
+                // Botón siguiente
+                if (result.page < result.totalPages) {
+                    pagination.append(`
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="goToPage(${result.page + 1})">
+                                ➡️
+                            </a>
+                        </li>
+                    `);
+                }
+            }
+
+            // Funciones globales
+            window.goToPage = function(page) {
+                currentFilter.page = page;
+                loadData();
+            };
+
+            window.editMovement = function(id) {
+                window.location.href = '@Url.Action("Edit", "Stocks")/' + id;
+            };
+
+            window.viewDetails = function(id) {
+                $.get('@Url.Action("GetDetails", "Stocks")', { id: id })
+                    .done(function(response) {
+                        if (response.success) {
+                            showDetailsModal(response.data);
+                        } else {
+                            alert('❌ Error: ' + response.error);
+                        }
+                    })
+                    .fail(function() {
+                        alert('❌ Error al obtener los detalles');
+                    });
+            };
+
+            window.deleteMovement = function(id) {
+                if (confirm('🗑️ ¿Está seguro de que desea eliminar esta operación?')) {
+                    $.post('@Url.Action("Delete", "Stocks")', { id: id })
+                        .done(function(response) {
+                            if (response.success) {
+                                showAlert('success', response.message);
+                                loadData(); // Recargar datos
+                            } else {
+                                showAlert('danger', response.error);
+                            }
+                        })
+                        .fail(function() {
+                            showAlert('danger', 'Error al eliminar la operación');
+                        });
+                }
+            };
+
+            function showDetailsModal(data) {
+                const operationText = data.operation === 0 ? '🛒 Compra' : '💸 Venta';
+                const operationClass = data.operation === 0 ? 'text-success' : 'text-danger';
+
+                const modalHtml = `
+                    <div class="modal fade" id="detailsModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">📊 Detalles - ${data.ticker}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <dl class="row">
+                                        <dt class="col-sm-4">📊 Ticker:</dt>
+                                        <dd class="col-sm-8"><strong>${data.ticker}</strong></dd>
+
+                                        <dt class="col-sm-4">🔄 Operación:</dt>
+                                        <dd class="col-sm-8 ${operationClass}"><strong>${operationText}</strong></dd>
+
+                                        <dt class="col-sm-4">📅 Fecha:</dt>
+                                        <dd class="col-sm-8">${formatDate(data.date)}</dd>
+
+                                        <dt class="col-sm-4">📦 Cantidad:</dt>
+                                        <dd class="col-sm-8">${formatNumber(data.quantity, 8)}</dd>
+
+                                        <dt class="col-sm-4">💰 Precio:</dt>
+                                        <dd class="col-sm-8">$${formatNumber(data.price, 4)}</dd>
+
+                                        <dt class="col-sm-4">💵 Valor Total:</dt>
+                                        <dd class="col-sm-8"><strong>$${formatNumber(data.totalValue, 2)}</strong></dd>
+
+                                        <dt class="col-sm-4">🏷️ Tipo:</dt>
+                                        <dd class="col-sm-8">${getTypeText(data.type)}</dd>
+
+                                        <dt class="col-sm-4">📅 Creado:</dt>
+                                        <dd class="col-sm-8">${formatDateTime(data.createdAt)}</dd>
+
+                                        <dt class="col-sm-4">🔄 Actualizado:</dt>
+                                        <dd class="col-sm-8">${formatDateTime(data.updatedAt)}</dd>
+                                    </dl>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" onclick="editMovement(${data.id})">
+                                        ✏️ Editar
+                                    </button>
+                                    <button type="button" class="btn btn-danger" onclick="deleteMovement(${data.id}); $('#detailsModal').modal('hide');">
+                                        🗑️ Eliminar
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                $('#detailsModal').remove();
+                $('body').append(modalHtml);
+                $('#detailsModal').modal('show');
+            }
+
+            function showError(message) {
+                $('#error-message').text('❌ ' + message).removeClass('d-none');
+                $('#data-container').addClass('d-none');
+                $('#summary-cards').hide();
+            }
+
+            function showAlert(type, message) {
+                const alertEmoji = type === 'success' ? '✅' : '❌';
+                const alertHtml = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${alertEmoji} ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+                $('#error-message').after(alertHtml);
+
+                // Auto-dismiss después de 3 segundos
+                setTimeout(function() {
+                    $('.alert').alert('close');
+                }, 3000);
+            }
+
+            function getTypeBadge(type) {
+                switch(type) {
+                    case 'STOCK':
+                        return '<span class="badge bg-primary">📈 Acción</span>';
+                    case 'CRYPTO':
+                        return '<span class="badge bg-warning">₿ Crypto</span>';
+                    case 'BOND':
+                        return '<span class="badge bg-info">📋 Bono</span>';
+                    default:
+                        return '<span class="badge bg-secondary">❓ Otro</span>';
+                }
+            }
+
+            function getTypeText(type) {
+                switch(type) {
+                    case 'STOCK':
+                        return '📈 Acción';
+                    case 'CRYPTO':
+                        return '₿ Criptomoneda';
+                    case 'BOND':
+                        return '📋 Bono';
+                    default:
+                        return '❓ Otro';
+                }
+            }
+
+            function formatNumber(num, decimals = 2) {
+                if (num == null) return '-';
+                return new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: decimals,
+                    maximumFractionDigits: decimals
+                }).format(num);
+            }
+
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('es-ES');
+            }
+
+            function formatDateTime(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleString('es-ES');
+            }
+
+            function exportToExcel() {
+                if (currentData.length === 0) {
+                    alert('📭 No hay datos para exportar');
+                    return;
+                }
+
+                let csv = 'Ticker,Operación,Fecha,Cantidad,Precio,Valor Total,Tipo,Creado\n';
+
+                currentData.forEach(function(item) {
+                    const operationText = item.operation === 0 ? 'Compra' : 'Venta';
+                    const typeText = getTypeText(item.type).replace(/[📈₿📋❓]/g, '').trim();
+
+                    csv += `"${item.ticker}","${operationText}","${formatDate(item.date)}",${item.quantity},${item.price},${item.totalValue},"${typeText}","${formatDateTime(item.createdAt)}"\n`;
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.setAttribute('hidden', '');
+                a.setAttribute('href', url);
+                a.setAttribute('download', `operaciones_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+
+            // Cargar datos inicial
+            loadData();
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .table th[data-sort] {
+            cursor: pointer;
+            user-select: none;
+        }
+
+            .table th[data-sort]:hover {
+                background-color: rgba(0,0,0,0.1);
+            }
+
+        .table th .sort-icon {
+            font-size: 0.8em;
+            opacity: 0.6;
+            transition: opacity 0.2s ease;
+        }
+
+        .table th[data-sort]:hover .sort-icon {
+            opacity: 1;
+        }
+
+        .table th.sort-asc .sort-icon::after {
+            content: ' ⬆️';
+        }
+
+        .table th.sort-desc .sort-icon::after {
+            content: ' ⬇️';
+        }
+
+        .btn-icon {
+            min-width: 32px;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .badge {
+            font-size: 0.8em;
+        }
+
+        .card {
+            transition: all 0.3s ease;
+        }
+
+            .card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+
+        #summary-cards .card {
+            border: none;
+            border-radius: 10px;
+        }
+
+        #summary-cards .card-body {
+            padding: 1.5rem;
+        }
+
+        #summary-cards h4 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        #summary-cards h6 {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .pagination-sm .page-link {
+            padding: 0.25rem 0.5rem;
+        }
+
+        #movements-table {
+            font-size: 0.9rem;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .text-success {
+            color: #28a745 !important;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
+        }
+
+        /* Responsive adjustments */
+        @@media (max-width: 768px) {
+            #summary-cards .col-md-3 {
+                margin-bottom: 1rem;
+            }
+
+            .table-responsive {
+                font-size: 0.8rem;
+            }
+
+            .btn-group-sm .btn {
+                padding: 0.125rem 0.25rem;
+                font-size: 0.7rem;
+            }
+        }
+
+        /* Loading animation */
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        /* Modal improvements */
+        .modal-content {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .modal-body dl {
+            margin-bottom: 0;
+        }
+
+        .modal-body dt {
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .modal-body dd {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Alert improvements */
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        /* Card hover effects */
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        /* Filter form improvements */
+        #filter-form .form-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        #filter-form .form-control,
+        #filter-form .form-select {
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+            #filter-form .form-control:focus,
+            #filter-form .form-select:focus {
+                border-color: #80bdff;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            }
+    </style>
+}

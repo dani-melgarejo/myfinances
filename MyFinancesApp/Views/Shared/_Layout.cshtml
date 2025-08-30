@@ -1,0 +1,433 @@
+﻿<!-- Views/Shared/_Layout.cshtml -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Binit Portfolio</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+        <div class="container-fluid">
+            <!-- Brand -->
+            <a class="navbar-brand fw-bold text-primary" asp-controller="Home" asp-action="Index">
+                <i class="fas fa-chart-line me-2"></i>Binit Portfolio
+            </a>
+
+            <!-- Toggle button for mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navigation items -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Left side navigation -->
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")"
+                           asp-controller="Home" asp-action="Index">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Stocks" ? "active" : "")"
+                           asp-controller="Stocks" asp-action="CreateOrEdit">
+                            <i class="fas fa-plus-circle me-1"></i>Operaciones
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Asset" ? "active" : "")"
+                           asp-controller="Asset" asp-action="Index">
+                            <i class="fas fa-coins me-1"></i>Assets
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Right side navigation with select -->
+                <ul class="navbar-nav">
+                    <!-- Navigation Select Dropdown -->
+                    <li class="nav-item dropdown me-3">
+                        <div class="nav-link p-0">
+                            <select id="nav-select" class="form-select form-select-sm" style="min-width: 200px;">
+                                <option value="">📊 Ir a sección...</option>
+                                <optgroup label="📈 Reportes">
+                                    <option value="/Historic" data-icon="fas fa-history">Histórico</option>
+                                    <option value="/Portfolio/Report" data-icon="fas fa-chart-pie">Reporte Portafolio</option>
+                                    <option value="/MarketData" data-icon="fas fa-chart-line">Market Data</option>
+                                </optgroup>
+                                <optgroup label="⚙️ Gestión">
+                                    <option value="/Stocks/CreateOrEdit" data-icon="fas fa-plus">Nueva Operación</option>
+                                    <option value="/Asset" data-icon="fas fa-coins">Gestionar Assets</option>
+                                </optgroup>
+                                <optgroup label="🔧 Herramientas">
+                                    <option value="/Historic" data-icon="fas fa-download" data-action="complete">Completar Histórico</option>
+                                    <option value="/Possession/UpdateAll" data-icon="fas fa-sync" data-action="update">Actualizar Posesiones</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </li>
+
+                    <!-- Quick Actions Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="quickActionsDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bolt"></i> Acciones
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-zap"></i> Acciones Rápidas
+                                </h6>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="quick-add-operation">
+                                    <i class="fas fa-plus text-primary"></i> Nueva Operación
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="quick-add-asset">
+                                    <i class="fas fa-coins text-warning"></i> Nuevo Asset
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="quick-complete-historic">
+                                    <i class="fas fa-download text-info"></i> Completar Histórico
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="quick-update-possessions">
+                                    <i class="fas fa-sync text-success"></i> Actualizar Posesiones
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Portfolio" asp-action="Report">
+                                    <i class="fas fa-chart-pie text-secondary"></i> Ver Reporte
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Asset Quick Search -->
+                    <li class="nav-item ms-2">
+                        <div class="nav-link p-0">
+                            <select id="asset-quick-search" class="form-select form-select-sm" style="min-width: 150px;">
+                                <option value="">🔍 Buscar asset...</option>
+                            </select>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Breadcrumb (opcional) -->
+    <nav aria-label="breadcrumb" class="bg-light border-bottom">
+        <div class="container-fluid">
+            <ol class="breadcrumb mb-0 py-2">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Home" asp-action="Index">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                @if (ViewContext.RouteData.Values["Controller"]?.ToString() != "Home")
+                {
+                    <li class="breadcrumb-item active">
+                        @ViewContext.RouteData.Values["Controller"]
+                    </li>
+                }
+                @if (!string.IsNullOrEmpty(ViewContext.RouteData.Values["Action"]?.ToString()) &&
+                ViewContext.RouteData.Values["Action"]?.ToString() != "Index")
+                {
+                    <li class="breadcrumb-item active">
+                        @ViewContext.RouteData.Values["Action"]
+                    </li>
+                }
+            </ol>
+        </div>
+    </nav>
+
+    <!-- Alert container for notifications -->
+    <div id="alert-container" class="container-fluid mt-2">
+        <!-- Las alertas se mostrarán aquí dinámicamente -->
+    </div>
+
+    <!-- Main Content -->
+    <main class="container-fluid mt-3">
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-light border-top mt-5 py-3">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        © 2024 Binit Portfolio - Sistema de gestión de activos financieros
+                    </small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="text-muted">
+                        <i class="fas fa-clock"></i> Última actualización: <span id="last-update">--</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- Layout Scripts -->
+    <script>
+        $(document).ready(function() {
+            // Inicializar Select2 para navegación
+            $('#nav-select').select2({
+                placeholder: '📊 Ir a sección...',
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Manejar cambio en select de navegación
+            $('#nav-select').on('change', function() {
+                const selectedValue = $(this).val();
+                const selectedOption = $(this).find('option:selected');
+                const action = selectedOption.data('action');
+
+                if (selectedValue) {
+                    if (action === 'complete') {
+                        // Acción especial para completar histórico
+                        completeHistoric();
+                    } else if (action === 'update') {
+                        // Acción especial para actualizar posesiones
+                        updatePossessions();
+                    } else {
+                        // Navegación normal
+                        window.location.href = selectedValue;
+                    }
+
+                    // Resetear select
+                    $(this).val('').trigger('change');
+                }
+            });
+
+            // Inicializar Select2 para búsqueda rápida de assets
+            $('#asset-quick-search').select2({
+                placeholder: '🔍 Buscar asset...',
+                allowClear: true,
+                minimumInputLength: 1,
+                ajax: {
+                    url: '@Url.Action("Search", "Asset")',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.map(item => ({
+                                id: item.id,
+                                text: `${item.text} 📈`
+                            }))
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            // Manejar selección de asset
+            $('#asset-quick-search').on('select2:select', function(e) {
+                const assetId = e.params.data.id;
+                const assetText = e.params.data.text;
+
+                // Mostrar modal con opciones para el asset seleccionado
+                showAssetOptionsModal(assetId, assetText);
+
+                // Resetear select
+                $(this).val('').trigger('change');
+            });
+
+            // Quick actions
+            $('#quick-add-operation').click(function(e) {
+                e.preventDefault();
+                window.location.href = '@Url.Action("CreateOrEdit", "Stocks")';
+            });
+
+            $('#quick-add-asset').click(function(e) {
+                e.preventDefault();
+                window.location.href = '@Url.Action("Index", "Asset")';
+            });
+
+            $('#quick-complete-historic').click(function(e) {
+                e.preventDefault();
+                completeHistoric();
+            });
+
+            $('#quick-update-possessions').click(function(e) {
+                e.preventDefault();
+                updatePossessions();
+            });
+
+            // Actualizar timestamp
+            updateLastUpdateTime();
+            setInterval(updateLastUpdateTime, 60000); // Cada minuto
+        });
+
+        function showAssetOptionsModal(assetId, assetText) {
+            const modalHtml = `
+                <div class="modal fade" id="assetOptionsModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-coins"></i> Opciones para ${assetText}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-primary" onclick="goToMarketData(${assetId})">
+                                        <i class="fas fa-chart-line"></i> Ver Market Data
+                                    </button>
+                                    <button class="btn btn-success" onclick="goToOperations(${assetId})">
+                                        <i class="fas fa-plus"></i> Nueva Operación
+                                    </button>
+                                    <button class="btn btn-info" onclick="goToPossessions(${assetId})">
+                                        <i class="fas fa-wallet"></i> Ver Posesiones
+                                    </button>
+                                    <button class="btn btn-warning" onclick="updateAssetHistoric(${assetId})">
+                                        <i class="fas fa-download"></i> Actualizar Histórico
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remover modal existente si existe
+            $('#assetOptionsModal').remove();
+
+            // Agregar y mostrar nuevo modal
+            $('body').append(modalHtml);
+            $('#assetOptionsModal').modal('show');
+        }
+
+        function goToMarketData(assetId) {
+            window.location.href = `@Url.Action("Index", "MarketData")?assetId=${assetId}`;
+            $('#assetOptionsModal').modal('hide');
+        }
+
+        function goToOperations(assetId) {
+            window.location.href = `@Url.Action("CreateOrEdit", "Stocks")?assetId=${assetId}`;
+            $('#assetOptionsModal').modal('hide');
+        }
+
+        function goToPossessions(assetId) {
+            // Implementar cuando tengas la vista de posesiones
+            alert('Vista de posesiones en desarrollo');
+            $('#assetOptionsModal').modal('hide');
+        }
+
+        function updateAssetHistoric(assetId) {
+            $('#assetOptionsModal').modal('hide');
+            showAlert('info', 'Actualizando histórico del asset...', 'fas fa-spinner fa-spin');
+
+            $.post('@Url.Action("GetPostsAsync", "Historic")', { assetId: assetId })
+                .done(function(response) {
+                    if (response.success) {
+                        showAlert('success', response.message || 'Histórico actualizado correctamente', 'fas fa-check');
+                    } else {
+                        showAlert('danger', response.error || 'Error al actualizar histórico', 'fas fa-exclamation-triangle');
+                    }
+                })
+                .fail(function() {
+                    showAlert('danger', 'Error de conexión al actualizar histórico', 'fas fa-exclamation-triangle');
+                });
+        }
+
+        function completeHistoric() {
+            showAlert('info', 'Completando datos históricos...', 'fas fa-spinner fa-spin');
+
+            $.post('@Url.Action("CompleteAllAssets", "Historic")')
+                .done(function(response) {
+                    if (response.message) {
+                        showAlert('success', response.message, 'fas fa-check');
+                    } else if (response.error) {
+                        showAlert('danger', response.error, 'fas fa-exclamation-triangle');
+                    }
+                })
+                .fail(function() {
+                    showAlert('danger', 'Error al completar histórico', 'fas fa-exclamation-triangle');
+                });
+        }
+
+        function updatePossessions() {
+            showAlert('info', 'Actualizando posesiones...', 'fas fa-spinner fa-spin');
+
+            $.post('@Url.Action("UpdateAll", "Possession")')
+                .done(function(response) {
+                    if (response.message) {
+                        showAlert('success', response.message, 'fas fa-check');
+                    } else if (response.error) {
+                        showAlert('danger', response.error, 'fas fa-exclamation-triangle');
+                    }
+                })
+                .fail(function() {
+                    showAlert('danger', 'Error al actualizar posesiones', 'fas fa-exclamation-triangle');
+                });
+        }
+
+        function showAlert(type, message, icon = '') {
+            const alertId = 'alert-' + Date.now();
+            const iconHtml = icon ? `<i class="${icon} me-2"></i>` : '';
+
+            const alertHtml = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${iconHtml}${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            $('#alert-container').append(alertHtml);
+
+            // Auto-dismiss después de 5 segundos (excepto para loading)
+            if (type !== 'info' || !icon.includes('fa-spin')) {
+                setTimeout(function() {
+                    $(`#${alertId}`).alert('close');
+                }, 5000);
+            }
+        }
+
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('es-ES');
+            $('#last-update').text(timeString);
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

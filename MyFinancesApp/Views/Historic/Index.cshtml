@@ -1,0 +1,112 @@
+﻿<!-- Views/Historic/Index.cshtml -->
+@{
+    ViewData["Title"] = "Histórico";
+}
+
+<div class="row">
+    <div class="col-12">
+        <h2>Datos Históricos</h2>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Completar Datos Históricos</h5>
+                <p class="card-text">
+                    Actualiza los datos históricos de todos los activos desde la última fecha disponible.
+                </p>
+
+                <button id="btn-complete-historic" class="btn btn-primary">
+                    <i class="fas fa-download"></i> Completar Histórico
+                </button>
+
+                <div id="loading" class="d-none mt-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <span class="ms-2">Procesando datos históricos...</span>
+                </div>
+
+                <div id="message" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Aquí puedes agregar una tabla para mostrar los datos históricos -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Últimos Datos Procesados</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped" id="historic-table">
+                        <thead>
+                            <tr>
+                                <th>Asset</th>
+                                <th>Fecha</th>
+                                <th>Apertura</th>
+                                <th>Cierre</th>
+                                <th>Máximo</th>
+                                <th>Mínimo</th>
+                                <th>Volumen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Los datos se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const btnComplete = document.getElementById("btn-complete-historic");
+            const loading = document.getElementById("loading");
+            const messageDiv = document.getElementById("message");
+
+            btnComplete.addEventListener("click", function(e) {
+                e.preventDefault();
+
+                // Mostrar loading
+                loading.classList.remove("d-none");
+                btnComplete.disabled = true;
+                messageDiv.innerHTML = "";
+
+                fetch('@Url.Action("CompleteAllAssets", "Historic")', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loading.classList.add("d-none");
+                    btnComplete.disabled = false;
+
+                    if (data.message) {
+                        messageDiv.innerHTML = `<div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i> ${data.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>`;
+                    } else if (data.error) {
+                        messageDiv.innerHTML = `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle"></i> Error: ${data.error}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>`;
+                    }
+                })
+                .catch(error => {
+                    loading.classList.add("d-none");
+                    btnComplete.disabled = false;
+
+                    messageDiv.innerHTML = `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle"></i> Error: ${error}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>`;
+                });
+            });
+        });
+    </script>
+}

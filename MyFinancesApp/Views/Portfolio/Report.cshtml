@@ -1,0 +1,257 @@
+﻿@using MyFinances.Logic.Models
+<!-- Views/Portfolio/Report.cshtml -->
+@model PortfolioReportRequestViewModel
+
+@{
+    ViewData["Title"] = "Reporte de Portafolio";
+}
+
+<div class="row">
+    <div class="col-12">
+        <h2>Reporte de Portafolio</h2>
+
+        <!-- Filtros -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="report-form">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="fechaInicio" class="form-label">Fecha Inicio</label>
+                                <input type="date" class="form-control" id="fechaInicio"
+                                       value="@Model.FechaInicio.ToString("yyyy-MM-dd")" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="fechaFin" class="form-label">Fecha Fin</label>
+                                <input type="date" class="form-control" id="fechaFin"
+                                       value="@Model.FechaFin.ToString("yyyy-MM-dd")" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div>
+                                    <button type="button" id="btn-generate-report" class="btn btn-primary">
+                                        <i class="fas fa-chart-bar"></i> Generar Reporte
+                                    </button>
+                                    <button type="button" id="btn-export" class="btn btn-success" disabled>
+                                        <i class="fas fa-file-excel"></i> Exportar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="text-center d-none">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Generando reporte...</p>
+        </div>
+
+        <!-- Tabla de resultados -->
+        <div id="report-container" class="d-none">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Resultados del Reporte</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="portfolio-table">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Ticker</th>
+                                    <th>Tenencia Inicial</th>
+                                    <th>Tenencia Final</th>
+                                    <th>Ganancia/Pérdida USD</th>
+                                    <th>Compras</th>
+                                    <th>Ventas</th>
+                                    <th>Inversión Neta</th>
+                                    <th>% Ganancia/Pérdida</th>
+                                    <th>SP500</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Los datos se cargarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensaje de error -->
+        <div id="error-message" class="alert alert-danger d-none" role="alert">
+            <!-- El mensaje de error se mostrará aquí -->
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            let reportData = [];
+
+            $('#btn-generate-report').click(function() {
+                generateReport();
+            });
+
+            $('#btn-export').click(function() {
+                exportToExcel();
+            });
+
+            function generateReport() {
+                const fechaInicio = $('#fechaInicio').val();
+                const fechaFin = $('#fechaFin').val();
+
+                if (!fechaInicio || !fechaFin) {
+                    alert('Por favor seleccione ambas fechas');
+                    return;
+                }
+
+                if (new Date(fechaInicio) > new Date(fechaFin)) {
+                    alert('La fecha de inicio no puede ser mayor a la fecha fin');
+                    return;
+                }
+
+                // Mostrar loading
+                $('#loading').removeClass('d-none');
+                $('#report-container').addClass('d-none');
+                $('#error-message').addClass('d-none');
+                $('#btn-export').prop('disabled', true);
+
+                const requestData = {
+                    fechaInicio: fechaInicio,
+                    fechaFin: fechaFin
+                };
+
+                $.ajax({
+                    url: '@Url.Action("GetReportData", "Portfolio")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData),
+                    success: function(response) {
+                        $('#loading').addClass('d-none');
+
+                        if (response.success) {
+                            reportData = response.data;
+                            displayReport(response.data);
+                            $('#btn-export').prop('disabled', false);
+                        } else {
+                            showError(response.error || 'Error desconocido');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $('#loading').addClass('d-none');
+                        showError('Error al generar el reporte: ' + error);
+                    }
+                });
+            }
+
+            function displayReport(data) {
+                const tbody = $('#portfolio-table tbody');
+                tbody.empty();
+
+                data.forEach(function(item) {
+                    const row = `
+                        <tr class="${item.tipoReporte === 'TOTAL PORTAFOLIO' ? 'table-warning fw-bold' : ''}">
+                            <td>${item.tipoReporte}</td>
+                            <td>${item.ticker}</td>
+                            <td class="text-end">$${formatNumber(item.tenenciaInicial)}</td>
+                            <td class="text-end">$${formatNumber(item.tenenciaFinal)}</td>
+                            <td class="text-end ${item.gananciaPerdidaUsd >= 0 ? 'text-success' : 'text-danger'}">
+                                $${formatNumber(item.gananciaPerdidaUsd)}
+                            </td>
+                            <td class="text-end">$${formatNumber(item.compras)}</td>
+                            <td class="text-end">$${formatNumber(item.ventas)}</td>
+                            <td class="text-end">$${formatNumber(item.inversionNeta)}</td>
+                            <td class="text-end ${item.porcentajeGananciaPerdida >= 0 ? 'text-success' : 'text-danger'}">
+                                ${formatNumber(item.porcentajeGananciaPerdida)}%
+                            </td>
+                            <td class="text-end ${item.sP500Rendimiento >= 0 ? 'text-success' : 'text-danger'}">
+                                ${formatNumber(item.sP500Rendimiento)}%
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+
+                $('#report-container').removeClass('d-none');
+            }
+
+            function showError(message) {
+                $('#error-message').text(message).removeClass('d-none');
+            }
+
+            function formatNumber(num) {
+                return new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(num);
+            }
+
+            function exportToExcel() {
+                if (reportData.length === 0) {
+                    alert('No hay datos para exportar');
+                    return;
+                }
+
+                // Crear CSV
+                let csv = 'Tipo,Ticker,Valor Inicial,Valor Final,Ganancia/Pérdida USD,Total Invertido,Total Retirado,Inversión Neta,% Ganancia/Pérdida\n';
+
+                reportData.forEach(function(item) {
+                    csv += `"${item.tipoReporte}","${item.ticker}",${item.valorInicial},${item.valorFinal},${item.gananciaPerdidaUsd},${item.totalInvertido},${item.totalRetirado},${item.inversionNeta},${item.porcentajeGananciaPerdida}\n`;
+                });
+
+                // Descargar archivo
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.setAttribute('hidden', '');
+                a.setAttribute('href', url);
+                a.setAttribute('download', `reporte_portafolio_${$('#fechaInicio').val()}_${$('#fechaFin').val()}.csv`);
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+
+            // Generar reporte inicial
+            generateReport();
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .table th {
+            white-space: nowrap;
+        }
+
+        .table td {
+            white-space: nowrap;
+        }
+
+        .table-warning {
+            border-top: 2px solid #ffc107;
+        }
+
+        #portfolio-table {
+            font-size: 0.9rem;
+        }
+
+        .text-success {
+            color: #28a745 !important;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
+        }
+    </style>
+}

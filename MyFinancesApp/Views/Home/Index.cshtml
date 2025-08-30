@@ -1,0 +1,50 @@
+﻿<!-- Views/Home/Index.cshtml -->
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-4">Bienvenido a Binit Portfolio</h1>
+        <p class="lead">Sistema de gestión de activos financieros</p>
+
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Operaciones</h5>
+                        <p class="card-text">Registra compras y ventas de activos</p>
+                        <a asp-controller="Stocks" asp-action="CreateOrEdit" class="btn btn-primary">Ir a Operaciones</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-history fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Histórico</h5>
+                        <p class="card-text">Consulta datos históricos</p>
+                        <a asp-controller="Historic" asp-action="Index" class="btn btn-success">Ver Histórico</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-coins fa-3x text-warning mb-3"></i>
+                        <h5 class="card-title">Activos</h5>
+                        <p class="card-text">Gestiona tus activos</p>
+                        <a asp-controller="Asset" asp-action="Index" class="btn btn-warning">Gestionar Activos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+}

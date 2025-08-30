@@ -1,0 +1,92 @@
+﻿@using MyFinances.Logic.Models
+@model EditMarketDataViewModel
+
+@{
+    ViewData["Title"] = "Nueva Cotización";
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus"></i> Nueva Cotización
+                </h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="AssetId" class="form-label">Asset</label>
+                                <select asp-for="AssetId" class="form-control select2" id="asset-select" required>
+                                    <option value="">Seleccionar Asset...</option>
+                                </select>
+                                <span asp-validation-for="AssetId" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Date" class="form-label">Fecha</label>
+                                <input asp-for="Date" type="date" class="form-control" required />
+                                <span asp-validation-for="Date" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resto del formulario igual que en Edit.cshtml -->
+                    <div class="row">
+       
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Close" class="form-label">Precio Cierre</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="Close" type="number" step="0.0001" class="form-control" />
+                                </div>
+                                <span asp-validation-for="Close" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Continúa con el resto de campos... -->
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Crear Cotización
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Inicializar Select2 para assets
+            $('#asset-select').select2({
+                placeholder: 'Buscar asset...',
+                minimumInputLength: 1,
+                ajax: {
+                    url: '@Url.Action("Search", "Asset")',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return { q: params.term };
+                    },
+                    processResults: function (data) {
+                        return { results: data };
+                    },
+                    cache: true
+                }
+            });
+
+            // Resto del JavaScript igual que en Edit.cshtml
+        });
+    </script>
+}
