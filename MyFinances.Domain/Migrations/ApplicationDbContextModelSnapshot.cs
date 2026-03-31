@@ -18,9 +18,141 @@ namespace MyFinances.Domain.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.8")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("RoleId")
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
+                });
 
             modelBuilder.Entity("MyFinances.Domain.Asset", b =>
                 {
@@ -28,7 +160,11 @@ namespace MyFinances.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CurrencyId")
+                        .HasColumnType("int")
+                        .HasColumnName("currency_id");
 
                     b.Property<string>("Ticker")
                         .IsRequired()
@@ -36,7 +172,304 @@ namespace MyFinances.Domain.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CurrencyId");
+
                     b.ToTable("assets");
+                });
+
+            modelBuilder.Entity("MyFinances.Domain.Currency", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("varchar(3)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("varchar(5)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("IsDefault");
+
+                    b.ToTable("currencies");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "USD",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = true,
+                            Name = "US Dollar",
+                            Symbol = "$"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "EUR",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Euro",
+                            Symbol = "€"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Code = "GBP",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "British Pound Sterling",
+                            Symbol = "£"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Code = "JPY",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Japanese Yen",
+                            Symbol = "¥"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Code = "CAD",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Canadian Dollar",
+                            Symbol = "C$"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Code = "AUD",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Australian Dollar",
+                            Symbol = "A$"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Code = "CHF",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Swiss Franc",
+                            Symbol = "CHF"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Code = "CNY",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Chinese Yuan",
+                            Symbol = "¥"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Code = "ARS",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Argentine Peso",
+                            Symbol = "$"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Code = "BRL",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Brazilian Real",
+                            Symbol = "R$"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Code = "MXN",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Mexican Peso",
+                            Symbol = "$"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Code = "CLP",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Chilean Peso",
+                            Symbol = "$"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Code = "COP",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Colombian Peso",
+                            Symbol = "$"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Code = "PEN",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Peruvian Sol",
+                            Symbol = "S/"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Code = "UYU",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Uruguayan Peso",
+                            Symbol = "$U"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Code = "INR",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Indian Rupee",
+                            Symbol = "₹"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Code = "KRW",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "South Korean Won",
+                            Symbol = "₩"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Code = "SGD",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Singapore Dollar",
+                            Symbol = "S$"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Code = "HKD",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "Hong Kong Dollar",
+                            Symbol = "HK$"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Code = "NZD",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDefault = false,
+                            Name = "New Zealand Dollar",
+                            Symbol = "NZ$"
+                        });
+                });
+
+            modelBuilder.Entity("MyFinances.Domain.CurrencyExchangeRate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("FromCurrencyId")
+                        .HasColumnType("int")
+                        .HasColumnName("from_currency_id");
+
+                    b.Property<bool>("IsLatest")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<decimal>("Rate")
+                        .HasColumnType("decimal(18,8)");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int>("ToCurrencyId")
+                        .HasColumnType("int")
+                        .HasColumnName("to_currency_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ToCurrencyId");
+
+                    b.HasIndex("Date", "IsLatest");
+
+                    b.HasIndex("FromCurrencyId", "ToCurrencyId", "IsLatest")
+                        .IsUnique()
+                        .HasFilter("IsLatest = 1");
+
+                    b.ToTable("currency_exchange_rates");
                 });
 
             modelBuilder.Entity("MyFinances.Domain.MarketData", b =>
@@ -45,7 +478,7 @@ namespace MyFinances.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AssetId")
                         .HasColumnType("int")
@@ -55,14 +488,89 @@ namespace MyFinances.Domain.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<int?>("CurrencyId")
+                        .HasColumnType("int")
+                        .HasColumnName("currency_id");
+
                     b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AssetId");
+                    b.HasIndex("CurrencyId");
+
+                    b.HasIndex("AssetId", "Date")
+                        .IsUnique();
 
                     b.ToTable("stocks_data");
+                });
+
+            modelBuilder.Entity("MyFinances.Domain.Model.ApplicationUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex");
+
+                    b.ToTable("AspNetUsers", (string)null);
                 });
 
             modelBuilder.Entity("MyFinances.Domain.Movement", b =>
@@ -71,14 +579,18 @@ namespace MyFinances.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AssetId")
                         .HasColumnType("int")
                         .HasColumnName("asset_id");
 
+                    b.Property<int?>("CurrencyId")
+                        .HasColumnType("int")
+                        .HasColumnName("currency_id");
+
                     b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("Operation")
                         .HasColumnType("int");
@@ -92,9 +604,16 @@ namespace MyFinances.Domain.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
+                    b.Property<string>("UserId")
+                        .HasColumnType("varchar(255)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AssetId");
+
+                    b.HasIndex("CurrencyId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("movements");
                 });
@@ -105,14 +624,18 @@ namespace MyFinances.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AssetId")
                         .HasColumnType("int")
                         .HasColumnName("asset_id");
 
+                    b.Property<int?>("CurrencyId")
+                        .HasColumnType("int")
+                        .HasColumnName("currency_id");
+
                     b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<decimal>("Quantity")
                         .HasColumnType("decimal(10,2)");
@@ -121,6 +644,9 @@ namespace MyFinances.Domain.Migrations
                         .HasColumnType("decimal(10,3)")
                         .HasColumnName("totalprice");
 
+                    b.Property<string>("UserId")
+                        .HasColumnType("varchar(255)");
+
                     b.Property<decimal>("Worth")
                         .HasColumnType("decimal(12,5)");
 
@@ -128,7 +654,91 @@ namespace MyFinances.Domain.Migrations
 
                     b.HasIndex("AssetId");
 
+                    b.HasIndex("CurrencyId");
+
+                    b.HasIndex("UserId");
+
                     b.ToTable("possessions");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.HasOne("MyFinances.Domain.Model.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.HasOne("MyFinances.Domain.Model.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyFinances.Domain.Model.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.HasOne("MyFinances.Domain.Model.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MyFinances.Domain.Asset", b =>
+                {
+                    b.HasOne("MyFinances.Domain.Currency", "Currency")
+                        .WithMany("Assets")
+                        .HasForeignKey("CurrencyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Currency");
+                });
+
+            modelBuilder.Entity("MyFinances.Domain.CurrencyExchangeRate", b =>
+                {
+                    b.HasOne("MyFinances.Domain.Currency", "FromCurrency")
+                        .WithMany("FromExchangeRates")
+                        .HasForeignKey("FromCurrencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MyFinances.Domain.Currency", "ToCurrency")
+                        .WithMany("ToExchangeRates")
+                        .HasForeignKey("ToCurrencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FromCurrency");
+
+                    b.Navigation("ToCurrency");
                 });
 
             modelBuilder.Entity("MyFinances.Domain.MarketData", b =>
@@ -139,7 +749,14 @@ namespace MyFinances.Domain.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("MyFinances.Domain.Currency", "Currency")
+                        .WithMany("MarketData")
+                        .HasForeignKey("CurrencyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Asset");
+
+                    b.Navigation("Currency");
                 });
 
             modelBuilder.Entity("MyFinances.Domain.Movement", b =>
@@ -150,7 +767,20 @@ namespace MyFinances.Domain.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("MyFinances.Domain.Currency", "Currency")
+                        .WithMany("Movements")
+                        .HasForeignKey("CurrencyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MyFinances.Domain.Model.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
                     b.Navigation("Asset");
+
+                    b.Navigation("Currency");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MyFinances.Domain.Possession", b =>
@@ -161,7 +791,35 @@ namespace MyFinances.Domain.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("MyFinances.Domain.Currency", "Currency")
+                        .WithMany("Possessions")
+                        .HasForeignKey("CurrencyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MyFinances.Domain.Model.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
                     b.Navigation("Asset");
+
+                    b.Navigation("Currency");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MyFinances.Domain.Currency", b =>
+                {
+                    b.Navigation("Assets");
+
+                    b.Navigation("FromExchangeRates");
+
+                    b.Navigation("MarketData");
+
+                    b.Navigation("Movements");
+
+                    b.Navigation("Possessions");
+
+                    b.Navigation("ToExchangeRates");
                 });
 #pragma warning restore 612, 618
         }

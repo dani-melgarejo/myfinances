@@ -13,7 +13,7 @@ public class MovementService(ApplicationDbContext context, IPossessionService po
     private readonly IPossessionService possessionService = possessionService;
     private readonly ILogger<MovementService> _logger = logger;
     
-    public async Task AddMovementAsync(int assetId, int operation, DateTime date, decimal quantity, decimal price, int type)
+    public async Task AddMovementAsync(int assetId, int operation, DateTime date, decimal quantity, decimal price, int type, int? currencyId = null, string? userId = null)
     {
         var movement = new Movement
         {
@@ -22,7 +22,9 @@ public class MovementService(ApplicationDbContext context, IPossessionService po
             Date = date,
             Quantity = quantity,
             Price = price,
-            Type = type
+            Type = type,
+            CurrencyId = currencyId, // Add currency support
+            UserId = userId
         };
 
         _context.Movements.Add(movement);
@@ -35,6 +37,7 @@ public class MovementService(ApplicationDbContext context, IPossessionService po
         {
             var query = _context.Movements
                 .Include(m => m.Asset)
+                .Include(m => m.Currency)
                 .AsQueryable();
 
             // Aplicar filtros
@@ -56,6 +59,11 @@ public class MovementService(ApplicationDbContext context, IPossessionService po
             if (filter.Type.HasValue)
             {
                 query = query.Where(m => m.Type == filter.Type);
+            }
+
+            if (!string.IsNullOrEmpty(filter.UserId))
+            {
+                query = query.Where(m => m.UserId == filter.UserId);
             }
 
             if (filter.FechaDesde.HasValue)
@@ -116,7 +124,10 @@ public class MovementService(ApplicationDbContext context, IPossessionService po
                     Date = m.Date,
                     Quantity = m.Quantity,
                     Price = m.Price,
-                    Type = m.Type
+                    Type = m.Type,
+                    CurrencyId = m.CurrencyId,
+                    CurrencyCode = m.Currency != null ? m.Currency.Code : "USD",
+                    CurrencySymbol = m.Currency != null ? m.Currency.Symbol : "$"
                 })
                 .ToListAsync();
 
@@ -145,6 +156,7 @@ public class MovementService(ApplicationDbContext context, IPossessionService po
         {
             var movement = await _context.Movements
                 .Include(m => m.Asset)
+                .Include(m => m.Currency)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (movement == null)
@@ -159,7 +171,10 @@ public class MovementService(ApplicationDbContext context, IPossessionService po
                 Date = movement.Date,
                 Quantity = movement.Quantity,
                 Price = movement.Price,
-                Type = movement.Type
+                Type = movement.Type,
+                CurrencyId = movement.CurrencyId,
+                CurrencyCode = movement.Currency?.Code ?? "USD",
+                CurrencySymbol = movement.Currency?.Symbol ?? "$"
             };
         }
         catch (Exception ex)
@@ -186,10 +201,11 @@ public class MovementService(ApplicationDbContext context, IPossessionService po
             movement.Quantity = model.Quantity;
             movement.Price = model.Price;
             movement.Type = model.Type;
+            movement.CurrencyId = model.CurrencyId; // Update currency
 
             await _context.SaveChangesAsync();
 
-            await possessionService.UpdatePossessionsForAssetAsync(movement.AssetId);
+            await possessionService.UpdatePossessionsForAssetAsync(movement.AssetId, movement.UserId);
 
             _logger.LogInformation($"Movimiento actualizado: ID {model.Id}, Asset {model.Ticker}");
             return true;
@@ -221,5 +237,14 @@ public class MovementService(ApplicationDbContext context, IPossessionService po
             _logger.LogError(ex, $"Error eliminando movimiento ID {id}");
             throw;
         }
+    }
+
+    public async Task<IEnumerable<int>> GetAssetIdsByUserAsync(string userId)
+    {
+        return await _context.Movements
+            .Where(m => m.UserId == userId)
+            .Select(m => m.AssetId)
+            .Distinct()
+            .ToListAsync();
     }
 }

@@ -10,4 +10,9 @@ public class StockMovementViewModel
     public decimal Quantity { get; set; }
     public decimal Price { get; set; }
     public int Type { get; set; }
+    
+    // Currency support - nullable for backward compatibility (null = USD)
+    public int? CurrencyId { get; set; }
+    public string? CurrencyCode { get; set; }
+    public string? CurrencySymbol { get; set; }
 }

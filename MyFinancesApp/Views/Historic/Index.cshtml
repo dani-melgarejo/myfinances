@@ -5,53 +5,128 @@
 
 <div class="row">
     <div class="col-12">
-        <h2>Datos Históricos</h2>
+        <h2>
+            <i class="fas fa-history"></i> Datos Históricos y Cotizaciones
+        </h2>
 
-        <div class="card">
+        <!-- Sección de Datos Históricos de Assets -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line"></i> Datos Históricos de Assets
+                </h5>
+            </div>
             <div class="card-body">
-                <h5 class="card-title">Completar Datos Históricos</h5>
                 <p class="card-text">
                     Actualiza los datos históricos de todos los activos desde la última fecha disponible.
+                    Este proceso descarga información de precios históricos para completar el histórico de cotizaciones.
                 </p>
 
                 <button id="btn-complete-historic" class="btn btn-primary">
-                    <i class="fas fa-download"></i> Completar Histórico
+                    <i class="fas fa-download"></i> Completar Histórico de Assets
                 </button>
 
-                <div id="loading" class="d-none mt-3">
+                <div id="loading-historic" class="d-none mt-3">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Cargando...</span>
                     </div>
-                    <span class="ms-2">Procesando datos históricos...</span>
+                    <span class="ms-2">Procesando datos históricos de assets...</span>
                 </div>
 
-                <div id="message" class="mt-3"></div>
+                <div id="message-historic" class="mt-3"></div>
             </div>
         </div>
 
-        <!-- Aquí puedes agregar una tabla para mostrar los datos históricos -->
-        <div class="card mt-4">
+        <!-- Nueva Sección de Cotizaciones de Monedas -->
+        <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0">Últimos Datos Procesados</h5>
+                <h5 class="mb-0">
+                    <i class="fas fa-exchange-alt"></i> Cotizaciones de Monedas
+                </h5>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped" id="historic-table">
-                        <thead>
-                            <tr>
-                                <th>Asset</th>
-                                <th>Fecha</th>
-                                <th>Apertura</th>
-                                <th>Cierre</th>
-                                <th>Máximo</th>
-                                <th>Mínimo</th>
-                                <th>Volumen</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Los datos se cargarán dinámicamente -->
-                        </tbody>
-                    </table>
+                <p class="card-text">
+                    Actualiza las cotizaciones de todas las monedas disponibles usando ExchangeRate-API.
+                    Las cotizaciones se obtienen en base USD y se actualizan automáticamente como las más recientes.
+                </p>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <button id="btn-update-exchange-rates" class="btn btn-success me-2">
+                            <i class="fas fa-sync"></i> Actualizar Cotizaciones
+                        </button>
+
+                        <button id="btn-exchange-rate-status" class="btn btn-info me-2">
+                            <i class="fas fa-info-circle"></i> Ver Estado
+                        </button>
+
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cog"></i> Opciones
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" id="btn-update-major">Actualizar Principales (USD, EUR, GBP, JPY)</a></li>
+                                <li><a class="dropdown-item" href="#" id="btn-update-latam">Actualizar Latinoamérica (ARS, BRL, MXN, CLP)</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="btn-update-possessions-currency">Actualizar Monedas de Posesiones</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="btn-view-all-rates">Ver Todas las Cotizaciones</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i> Fuente: ExchangeRate-API<br>
+                            <i class="fas fa-globe"></i> Base: USD
+                        </small>
+                    </div>
+                </div>
+
+                <div id="loading-exchange" class="d-none mt-3">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <span class="ms-2">Actualizando cotizaciones de monedas...</span>
+                </div>
+
+                <div id="message-exchange" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Información de Estado -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info"></i> Información del Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>💹 Assets Históricos:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Descarga automática de Yahoo Finance</li>
+                            <li><i class="fas fa-check text-success"></i> Actualización incremental</li>
+                            <li><i class="fas fa-check text-success"></i> Validación de datos duplicados</li>
+                            <li><i class="fas fa-check text-success"></i> Actualización automática de monedas en posesiones</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>💱 Cotizaciones de Monedas:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> API confiable (ExchangeRate-API)</li>
+                            <li><i class="fas fa-check text-success"></i> Más de 160 monedas soportadas</li>
+                            <li><i class="fas fa-check text-success"></i> Actualización en tiempo real</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <h6><i class="fas fa-lightbulb"></i> Recomendación:</h6>
+                    <p class="mb-0">
+                        Ejecuta "Completar Histórico de Assets" primero para obtener los datos de precios históricos,
+                        luego "Actualizar Cotizaciones" para mantener las conversiones de moneda al día.
+                    </p>
                 </div>
             </div>
         </div>
@@ -61,17 +136,50 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            const btnComplete = document.getElementById("btn-complete-historic");
-            const loading = document.getElementById("loading");
-            const messageDiv = document.getElementById("message");
+            // Historic Assets Elements
+            const btnCompleteHistoric = document.getElementById("btn-complete-historic");
+            const loadingHistoric = document.getElementById("loading-historic");
+            const messageHistoric = document.getElementById("message-historic");
 
-            btnComplete.addEventListener("click", function(e) {
+            // Exchange Rates Elements
+            const btnUpdateExchangeRates = document.getElementById("btn-update-exchange-rates");
+            const btnExchangeRateStatus = document.getElementById("btn-exchange-rate-status");
+            const loadingExchange = document.getElementById("loading-exchange");
+            const messageExchange = document.getElementById("message-exchange");
+
+            // Helper function to show alerts
+            function showAlert(containerId, type, message, details = null) {
+                const container = document.getElementById(containerId);
+                let alertHtml = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'}"></i> 
+                        ${message}
+                `;
+
+                if (details) {
+                    alertHtml += `
+                        <hr>
+                        <small>
+                            ${details}
+                        </small>
+                    `;
+                }
+
+                alertHtml += `
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+                container.innerHTML = alertHtml;
+            }
+
+            // Complete Historic Assets
+            btnCompleteHistoric.addEventListener("click", function(e) {
                 e.preventDefault();
 
-                // Mostrar loading
-                loading.classList.remove("d-none");
-                btnComplete.disabled = true;
-                messageDiv.innerHTML = "";
+                loadingHistoric.classList.remove("d-none");
+                btnCompleteHistoric.disabled = true;
+                messageHistoric.innerHTML = "";
 
                 fetch('@Url.Action("CompleteAllAssets", "Historic")', {
                     method: "POST",
@@ -82,31 +190,219 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    loading.classList.add("d-none");
-                    btnComplete.disabled = false;
+                    loadingHistoric.classList.add("d-none");
+                    btnCompleteHistoric.disabled = false;
 
                     if (data.message) {
-                        messageDiv.innerHTML = `<div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle"></i> ${data.message}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>`;
+                        showAlert("message-historic", "success", data.message);
                     } else if (data.error) {
-                        messageDiv.innerHTML = `<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle"></i> Error: ${data.error}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>`;
+                        showAlert("message-historic", "danger", `Error: ${data.error}`);
                     }
                 })
                 .catch(error => {
-                    loading.classList.add("d-none");
-                    btnComplete.disabled = false;
-
-                    messageDiv.innerHTML = `<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="fas fa-exclamation-circle"></i> Error: ${error}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>`;
+                    loadingHistoric.classList.add("d-none");
+                    btnCompleteHistoric.disabled = false;
+                    showAlert("message-historic", "danger", `Error: ${error}`);
                 });
             });
+
+            // Update Exchange Rates
+            btnUpdateExchangeRates.addEventListener("click", function(e) {
+                e.preventDefault();
+
+                loadingExchange.classList.remove("d-none");
+                btnUpdateExchangeRates.disabled = true;
+                messageExchange.innerHTML = "";
+
+                fetch('@Url.Action("UpdateExchangeRates", "Historic")', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loadingExchange.classList.add("d-none");
+                    btnUpdateExchangeRates.disabled = false;
+
+                    if (data.message) {
+                        let details = "";
+                        if (data.details) {
+                            details = `
+                                Procesadas: ${data.details.totalProcessed} | 
+                                Nuevas: ${data.details.newRates} | 
+                                Actualizadas: ${data.details.updatedRates} | 
+                                Omitidas: ${data.details.skippedRates}
+                            `;
+                        }
+                        showAlert("message-exchange", "success", data.message, details);
+                    } else if (data.error) {
+                        showAlert("message-exchange", "danger", `Error: ${data.error}`);
+                    }
+                })
+                .catch(error => {
+                    loadingExchange.classList.add("d-none");
+                    btnUpdateExchangeRates.disabled = false;
+                    showAlert("message-exchange", "danger", `Error: ${error}`);
+                });
+            });
+
+            // Exchange Rate Status
+            btnExchangeRateStatus.addEventListener("click", function(e) {
+                e.preventDefault();
+
+                fetch('@Url.Action("GetExchangeRateStatus", "Historic")', {
+                    method: "GET"
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        showAlert("message-exchange", "info", data.message, 
+                            `Estado de API: ${data.apiStatus} | Última consulta: ${new Date().toLocaleString()}`);
+                    } else if (data.error) {
+                        showAlert("message-exchange", "warning", `Error obteniendo estado: ${data.error}`);
+                    }
+                })
+                .catch(error => {
+                    showAlert("message-exchange", "warning", `Error: ${error}`);
+                });
+            });
+
+            // Update Major Currencies
+            document.getElementById("btn-update-major").addEventListener("click", function(e) {
+                e.preventDefault();
+                updateSpecificCurrencies(["EUR", "GBP", "JPY", "CAD", "AUD", "CHF"], "Monedas Principales");
+            });
+
+            // Update Latin America Currencies
+            document.getElementById("btn-update-latam").addEventListener("click", function(e) {
+                e.preventDefault();
+                updateSpecificCurrencies(["ARS", "BRL", "MXN", "CLP", "COP", "PEN", "UYU"], "Monedas Latinoamericanas");
+            });
+
+            // Update Possession Currencies
+            document.getElementById("btn-update-possessions-currency").addEventListener("click", function(e) {
+                e.preventDefault();
+                updatePossessionsCurrency();
+            });
+
+            // View all rates
+            document.getElementById("btn-view-all-rates").addEventListener("click", function(e) {
+                e.preventDefault();
+                // TODO: Implement view all rates functionality
+                showAlert("message-exchange", "info", "Funcionalidad 'Ver Todas las Cotizaciones' en desarrollo", 
+                    "Próximamente podrás ver todas las cotizaciones almacenadas en el sistema");
+            });
+
+            // Helper function for specific currencies update
+            function updateSpecificCurrencies(currencies, description) {
+                loadingExchange.classList.remove("d-none");
+                messageExchange.innerHTML = "";
+
+                fetch('@Url.Action("UpdateSpecificExchangeRates", "Historic")', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    body: JSON.stringify(currencies)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loadingExchange.classList.add("d-none");
+
+                    if (data.message) {
+                        let details = "";
+                        if (data.details && data.details.processedCurrencies) {
+                            details = `${description}: ${data.details.processedCurrencies.join(", ")} | Procesadas: ${data.details.totalProcessed}`;
+                        }
+                        showAlert("message-exchange", "success", data.message, details);
+                    } else if (data.error) {
+                        showAlert("message-exchange", "danger", `Error actualizando ${description}: ${data.error}`);
+                    }
+                })
+                .catch(error => {
+                    loadingExchange.classList.add("d-none");
+                    showAlert("message-exchange", "danger", `Error: ${error}`);
+                });
+            }
+
+            // Helper function for updating possession currencies
+            function updatePossessionsCurrency() {
+                loadingExchange.classList.remove("d-none");
+                messageExchange.innerHTML = "";
+
+                fetch('@Url.Action("UpdatePossessionsCurrency", "Historic")', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loadingExchange.classList.add("d-none");
+
+                    if (data.message) {
+                        showAlert("message-exchange", "success", data.message, 
+                            "Las posesiones ahora tienen la moneda correcta según sus assets");
+                    } else if (data.error) {
+                        showAlert("message-exchange", "danger", `Error actualizando monedas de posesiones: ${data.error}`);
+                    }
+                })
+                .catch(error => {
+                    loadingExchange.classList.add("d-none");
+                    showAlert("message-exchange", "danger", `Error: ${error}`);
+                });
+            }
         });
     </script>
+}
+
+@section Styles {
+    <style>
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .btn {
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .dropdown-menu {
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .list-unstyled li {
+            margin-bottom: 0.25rem;
+        }
+    </style>
 }

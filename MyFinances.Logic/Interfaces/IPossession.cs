@@ -4,6 +4,7 @@ namespace MyFinances.Logic.Interfaces;
 
 public interface IPossessionService
 {
-    Task UpdatePossessionsForAssetAsync(int assetId);
-    Task<IEnumerable<Possession>> GetPossessionsByAssetAsync(int assetId);
+    Task UpdatePossessionsForAssetAsync(int assetId, string userId);
+    Task<IEnumerable<Possession>> GetPossessionsByAssetAsync(int assetId, string userId);
+    Task UpdateAllPossessionsCurrencyAsync();
 }

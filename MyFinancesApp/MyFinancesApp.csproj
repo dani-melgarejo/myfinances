@@ -22,4 +22,8 @@
     <ProjectReference Include="..\MyFinances.Logic\MyFinances.Logic.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Pages\Account\" />
+  </ItemGroup>
+
 </Project>

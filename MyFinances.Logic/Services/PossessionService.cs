@@ -11,19 +11,31 @@ public class PossessionService(ApplicationDbContext context, ILogger<PossessionS
     private readonly ApplicationDbContext _context = context;
     private readonly ILogger<PossessionService> _logger = logger;
 
-    public async Task UpdatePossessionsForAssetAsync(int assetId)
+    public async Task UpdatePossessionsForAssetAsync(int assetId, string userId)
     {
         try
         {
             _logger.LogInformation($"Actualizando posesiones para asset {assetId}");
 
-            // 1. Eliminar posesiones existentes para este asset
+            // Get the asset with its currency information
+            var asset = await _context.Assets
+                .Include(a => a.Currency)
+                .FirstOrDefaultAsync(a => a.Id == assetId);
+
+            if (asset == null)
+            {
+                _logger.LogWarning($"Asset {assetId} not found");
+                return;
+            }
+
+            // 1. Eliminar posesiones existentes para este asset y usuario
             await _context.Database.ExecuteSqlRawAsync(
-                "DELETE FROM Possessions WHERE asset_id = {0}", assetId);
+                "DELETE FROM possessions WHERE asset_id = {0} AND UserId = {1}", assetId, userId);
 
             // 2. Insertar nuevas posesiones basadas en MarketData y Movements
+            // Updated SQL to include currency_id from the asset
             var sql = @"
-                    INSERT INTO Possessions (date, asset_id, quantity, TotalPrice, Worth)
+                    INSERT INTO possessions (date, asset_id, quantity, TotalPrice, Worth, currency_id, UserId)
                     SELECT 
                         md.Date,
                         md.asset_id,
@@ -34,9 +46,10 @@ public class PossessionService(ApplicationDbContext context, ILogger<PossessionS
                                     WHEN m.Operation = 1 THEN -m.Quantity 
                                     ELSE 0 
                                 END)
-                             FROM Movements m 
+                             FROM movements m 
                              WHERE m.asset_id = md.asset_id 
                                AND m.Date <= md.Date
+                               AND m.UserId = {2}
                             ), 0
                         ) as Quantity,
                         COALESCE(
@@ -46,22 +59,25 @@ public class PossessionService(ApplicationDbContext context, ILogger<PossessionS
                                     WHEN m.Operation = 1 THEN -m.Quantity 
                                     ELSE 0 
                                 END)
-                             FROM Movements m 
+                             FROM movements m 
                              WHERE m.asset_id = md.asset_id 
                                AND m.Date <= md.Date
+                               AND m.UserId = {2}
                             ), 0
-                        ) * md.[Close] as TotalPrice,
-                        0 as Worth -- Se calculará después
+                        ) * md.Close as TotalPrice,
+                        0 as Worth, -- Se calculará después
+                        {1} as currency_id, -- Currency from asset
+                        {2} as UserId -- User from parameter
                     FROM stocks_data md
                     WHERE md.asset_id = {0}
                     ORDER BY md.Date";
 
-            await _context.Database.ExecuteSqlRawAsync(sql, assetId);
+            await _context.Database.ExecuteSqlRawAsync(sql, assetId, asset.CurrencyId, userId);
 
             // 3. Calcular Worth usando CTE equivalente
-            await CalculateWorthForAssetAsync(assetId);
+            await CalculateWorthForAssetAsync(assetId, userId);
 
-            _logger.LogInformation($"✅ Posesiones actualizadas para asset {assetId}");
+            _logger.LogInformation($"✅ Posesiones actualizadas para asset {assetId} con moneda {asset.Currency?.Code ?? "USD"}");
         }
         catch (Exception ex)
         {
@@ -70,11 +86,11 @@ public class PossessionService(ApplicationDbContext context, ILogger<PossessionS
         }
     }
 
-    private async Task CalculateWorthForAssetAsync(int assetId)
+    private async Task CalculateWorthForAssetAsync(int assetId, string userId)
     {
         // Obtener movimientos diarios agrupados
         var dailyMovements = await _context.Movements
-            .Where(m => m.AssetId == assetId)
+            .Where(m => m.AssetId == assetId && m.UserId == userId)
             .GroupBy(m => new { m.AssetId, m.Date })
             .Select(g => new
             {
@@ -90,7 +106,7 @@ public class PossessionService(ApplicationDbContext context, ILogger<PossessionS
 
         // Obtener todas las posesiones ordenadas por fecha
         var possessions = await _context.Possessions
-            .Where(p => p.AssetId == assetId)
+            .Where(p => p.AssetId == assetId && p.UserId == userId)
             .OrderBy(p => p.Date)
             .ToListAsync();
 
@@ -129,12 +145,39 @@ public class PossessionService(ApplicationDbContext context, ILogger<PossessionS
         await _context.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<Possession>> GetPossessionsByAssetAsync(int assetId)
+    public async Task<IEnumerable<Possession>> GetPossessionsByAssetAsync(int assetId, string userId)
     {
         return await _context.Possessions
             .Include(p => p.Asset)
-            .Where(p => p.AssetId == assetId)
+            .Include(p => p.Currency)  // Include currency information
+            .Where(p => p.AssetId == assetId && p.UserId == userId)
             .OrderBy(p => p.Date)
             .ToListAsync();
+    }
+
+    public async Task UpdateAllPossessionsCurrencyAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Updating currency information for all possessions");
+
+            // Update possessions to match their asset's currency
+            var sql = @"
+                UPDATE possessions p
+                INNER JOIN assets a ON p.asset_id = a.Id
+                SET p.currency_id = a.currency_id
+                WHERE p.currency_id != a.currency_id 
+                   OR (p.currency_id IS NULL AND a.currency_id IS NOT NULL)
+                   OR (p.currency_id IS NOT NULL AND a.currency_id IS NULL)";
+
+            var updatedRows = await _context.Database.ExecuteSqlRawAsync(sql);
+            
+            _logger.LogInformation($"✅ Updated currency for {updatedRows} possessions");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating currency information for possessions");
+            throw;
+        }
     }
 }

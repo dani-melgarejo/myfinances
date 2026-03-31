@@ -11,4 +11,5 @@ public class StockMovementFilterViewModel
     public int PageSize { get; set; } = 25;
     public string SortBy { get; set; } = "Date";
     public string SortDirection { get; set; } = "desc";
+    public string? UserId { get; set; }
 }

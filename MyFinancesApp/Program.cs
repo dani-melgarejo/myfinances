@@ -1,3 +1,4 @@
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MyFinances.Domain.Model;
 using MyFinances.Logic.Configuration;
@@ -8,10 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
 
 builder.Services.AddHttpClient<HistoricService>();
+builder.Services.AddHttpClient<ExchangeRateApiService>();
 
-// Configurar opciones de configuraci�n
+// Configurar opciones de configuración
 builder.Services.Configure<AppConfig>(builder.Configuration);
 
 // Registrar tus servicios
@@ -21,23 +24,37 @@ builder.Services.AddScoped<IHistoricService, HistoricService>();
 builder.Services.AddScoped<IMarketDataService, MarketDataService>();
 builder.Services.AddScoped<IPossessionService, PossessionService>();
 builder.Services.AddScoped<IPortfolioReportService, PortfolioReportService>();
+builder.Services.AddScoped<IStockQuoteService, StockQuoteService>();
+builder.Services.AddScoped<ICurrencyService, CurrencyService>();
+builder.Services.AddScoped<ICurrencyExchangeRateService, CurrencyExchangeRateService>();
+builder.Services.AddScoped<IExchangeRateApiService, ExchangeRateApiService>();
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
 
 // Configurar Entity Framework
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
+    options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlOptions => sqlOptions.EnableRetryOnFailure(
+        new MySqlServerVersion(new Version(8, 4, 8)), // Especificar versión de MySQL
+        mySqlOptions => mySqlOptions.EnableRetryOnFailure(
             maxRetryCount: 3,
             maxRetryDelay: TimeSpan.FromSeconds(30),
             errorNumbersToAdd: null)
     ));
 
-
-
 var app = builder.Build();
 // Add services to the container.
 
-// Aplicar migraciones autom�ticamente en desarrollo
+// Aplicar migraciones automáticamente en desarrollo
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
@@ -58,10 +75,13 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+
 
 app.Run();

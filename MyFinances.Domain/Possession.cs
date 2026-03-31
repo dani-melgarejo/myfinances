@@ -2,6 +2,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using MyFinances.Domain.Model;
 
 [Table("possessions")]
 public class Possession
@@ -32,9 +33,21 @@ public class Possession
     [Required]
     public decimal Worth { get; set; } = 0;
 
+    // Currency relationship - nullable for backward compatibility (null = USD)
+    [Column("currency_id")]
+    public int? CurrencyId { get; set; }
+
+    [ForeignKey(nameof(CurrencyId))]
+    public Currency? Currency { get; set; }
+
+    public string? UserId { get; set; }
+
+    [ForeignKey(nameof(UserId))]
+    public ApplicationUser? User { get; set; }
+
     public override string ToString()
     {
-        return $"Possession(AssetId={AssetId}, Date={Date}, Quantity={Quantity}, TotalPrice={TotalPrice}, Worth={Worth})";
+        return $"Possession(AssetId={AssetId}, Date={Date}, Quantity={Quantity}, TotalPrice={TotalPrice}, Worth={Worth}, CurrencyId={CurrencyId})";
     }
 
     public Dictionary<string, object?> ToDict()
@@ -46,7 +59,8 @@ public class Possession
             { "asset_id", AssetId },
             { "quantity", (double)Quantity },
             { "totalprice", (double)TotalPrice },
-            { "worth", (double)Worth }
+            { "worth", (double)Worth },
+            { "currency_id", CurrencyId }
         };
     }
 }

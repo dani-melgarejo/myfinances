@@ -27,7 +27,16 @@ public class HistoricService(
             // Construir URL
             var yahooClient = new YahooClient();
 
-            IEnumerable<HistoricalChartInfo> historicalData = await yahooClient.GetHistoricalDataAsync(asset.Ticker, DataFrequency.Daily, dateFrom);
+            IEnumerable<HistoricalChartInfo> historicalData;
+            try
+            {
+                historicalData = await yahooClient.GetHistoricalDataAsync(asset.Ticker, DataFrequency.Daily, dateFrom);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("Requested Information Not Available On Yahoo Finance"))
+            {
+                _logger.LogWarning($"No hay datos disponibles en Yahoo Finance para {asset.Ticker}. Se omite el asset.");
+                return;
+            }
 
             _logger.LogInformation($"Obteniendo datos históricos para {asset.Ticker} desde {dateFrom}");
 
@@ -37,7 +46,7 @@ public class HistoricService(
                 // Verificar si ya existe el registro para evitar duplicados
                 var existingData = await _context.MarketData
                     .AnyAsync(md => md.AssetId == assetId &&
-                                  md.Date == row.Date);
+                                  md.Date == row.Date.Date);
 
                 if (!existingData)
                 {

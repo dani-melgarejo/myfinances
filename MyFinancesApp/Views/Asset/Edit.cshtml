@@ -1,0 +1,184 @@
+﻿@model MyFinancesApp.Models.EditAssetViewModel
+
+@{
+    ViewData["Title"] = "Editar Asset";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit"></i> Editar Asset - @Model.Ticker
+                </h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit" method="post" id="edit-form">
+                    <input asp-for="Id" type="hidden" />
+
+                    <div class="mb-3">
+                        <label asp-for="Ticker" class="form-label">Ticker *</label>
+                        <input asp-for="Ticker" class="form-control text-uppercase" required />
+                        <span asp-validation-for="Ticker" class="text-danger"></span>
+                        <div class="form-text">Símbolo del activo (ticker)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CurrencyId" class="form-label">Moneda</label>
+                        <select asp-for="CurrencyId" class="form-control select2" id="currency-select">
+                            <option value="">USD (Por defecto)</option>
+                        </select>
+                        <div class="form-text">Si no selecciona ninguna, se utilizará USD por defecto</div>
+                        <span asp-validation-for="CurrencyId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Actualizar Asset
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </form>
+
+                <!-- Alertas -->
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check"></i> @TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i> @TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Información del Asset -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Información del Asset
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>ID:</strong> @Model.Id
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Ticker Actual:</strong> @Model.Ticker
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-12">
+                        <strong>Moneda Actual:</strong> 
+                        @if (Model.CurrencyCode != null)
+                        {
+                            <span class="badge bg-primary">@Model.CurrencySymbol @Model.CurrencyCode</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">$ USD (Por defecto)</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mt-3">
+                    <small>
+                        <strong>⚠️ Advertencia:</strong> 
+                        Cambiar la moneda del asset puede afectar las cotizaciones y operaciones existentes.
+                        Asegúrate de que este cambio sea correcto.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Inicializar Select2 para currency
+            $('#currency-select').select2({
+                placeholder: 'USD (Por defecto)',
+                allowClear: true,
+                ajax: {
+                    url: '@Url.Action("GetCurrencies", "Asset")',
+                    dataType: 'json',
+                    delay: 250,
+                    processResults: function (data) {
+                        return {
+                            results: data
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            // Auto-uppercase ticker
+            $('#Ticker').on('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+
+            // Preseleccionar la moneda si existe
+            @if (Model.CurrencyId.HasValue)
+            {
+                <text>
+                setTimeout(function() {
+                    const currencyOption = new Option('@Model.CurrencyCode - @Model.CurrencySymbol', '@Model.CurrencyId', true, true);
+                    $('#currency-select').append(currencyOption).trigger('change');
+                }, 500);
+                </text>
+            }
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .text-uppercase {
+            text-transform: uppercase !important;
+        }
+
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .btn {
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .badge {
+            font-size: 0.9em;
+        }
+
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+    </style>
+}

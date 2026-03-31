@@ -21,148 +21,176 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-        <div class="container-fluid">
-            <!-- Brand -->
-            <a class="navbar-brand fw-bold text-primary" asp-controller="Home" asp-action="Index">
-                <i class="fas fa-chart-line me-2"></i>Binit Portfolio
-            </a>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+            <div class="container-fluid">
+                <!-- Brand -->
+                <a class="navbar-brand fw-bold text-primary" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-chart-line me-2"></i>Binit Portfolio
+                </a>
 
-            <!-- Toggle button for mobile -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+                <!-- Toggle button for mobile -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-            <!-- Navigation items -->
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Left side navigation -->
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")"
-                           asp-controller="Home" asp-action="Index">
-                            <i class="fas fa-home me-1"></i>Home
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Stocks" ? "active" : "")"
-                           asp-controller="Stocks" asp-action="CreateOrEdit">
-                            <i class="fas fa-plus-circle me-1"></i>Operaciones
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Asset" ? "active" : "")"
-                           asp-controller="Asset" asp-action="Index">
-                            <i class="fas fa-coins me-1"></i>Assets
-                        </a>
-                    </li>
-                </ul>
+                <!-- Navigation items -->
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <!-- Left side navigation -->
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")"
+                               asp-controller="Home" asp-action="Index">
+                                <i class="fas fa-home me-1"></i>Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Stocks" ? "active" : "")"
+                               asp-controller="Stocks" asp-action="CreateOrEdit">
+                                <i class="fas fa-plus-circle me-1"></i>Operaciones
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Asset" ? "active" : "")"
+                               asp-controller="Asset" asp-action="Index">
+                                <i class="fas fa-coins me-1"></i>Assets
+                            </a>
+                        </li>
+                    </ul>
 
-                <!-- Right side navigation with select -->
-                <ul class="navbar-nav">
-                    <!-- Navigation Select Dropdown -->
-                    <li class="nav-item dropdown me-3">
-                        <div class="nav-link p-0">
-                            <select id="nav-select" class="form-select form-select-sm" style="min-width: 200px;">
-                                <option value="">📊 Ir a sección...</option>
-                                <optgroup label="📈 Reportes">
-                                    <option value="/Historic" data-icon="fas fa-history">Histórico</option>
-                                    <option value="/Portfolio/Report" data-icon="fas fa-chart-pie">Reporte Portafolio</option>
-                                    <option value="/MarketData" data-icon="fas fa-chart-line">Market Data</option>
-                                </optgroup>
-                                <optgroup label="⚙️ Gestión">
-                                    <option value="/Stocks/CreateOrEdit" data-icon="fas fa-plus">Nueva Operación</option>
-                                    <option value="/Asset" data-icon="fas fa-coins">Gestionar Assets</option>
-                                </optgroup>
-                                <optgroup label="🔧 Herramientas">
-                                    <option value="/Historic" data-icon="fas fa-download" data-action="complete">Completar Histórico</option>
-                                    <option value="/Possession/UpdateAll" data-icon="fas fa-sync" data-action="update">Actualizar Posesiones</option>
-                                </optgroup>
-                            </select>
-                        </div>
-                    </li>
+                    <!-- Right side navigation with select -->
+                    <ul class="navbar-nav">
+                        <!-- Navigation Select Dropdown -->
+                        <li class="nav-item dropdown me-3">
+                            <div class="nav-link p-0">
+                                <select id="nav-select" class="form-select form-select-sm" style="min-width: 200px;">
+                                    <option value="">📊 Ir a sección...</option>
+                                    <optgroup label="📈 Reportes">
+                                        <option value="/Historic" data-icon="fas fa-history">Histórico</option>
+                                        <option value="/Portfolio/Report" data-icon="fas fa-chart-pie">Reporte Portafolio</option>
+                                        <option value="/Portfolio/ChartReport" data-icon="fas fa-chart-line">Gráficos Portafolio</option>
+                                        <option value="/MarketData" data-icon="fas fa-chart-line">Market Data</option>
+                                        <option value="/StockQuote" data-icon="fas fa-search">Cotizaciones Yahoo</option>
+                                    </optgroup>
+                                    <optgroup label="⚙️ Gestión">
+                                        <option value="/Stocks/CreateOrEdit" data-icon="fas fa-plus">Nueva Operación</option>
+                                        <option value="/Asset" data-icon="fas fa-coins">Gestionar Assets</option>
+                                    </optgroup>
+                                    <optgroup label="🔧 Herramientas">
+                                        <option value="/Historic" data-icon="fas fa-download" data-action="complete">Completar Histórico</option>
+                                        <option value="/Possession/UpdateAll" data-icon="fas fa-sync" data-action="update">Actualizar Posesiones</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </li>
 
-                    <!-- Quick Actions Dropdown -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="quickActionsDropdown" role="button"
-                           data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-bolt"></i> Acciones
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <h6 class="dropdown-header">
-                                    <i class="fas fa-zap"></i> Acciones Rápidas
-                                </h6>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="#" id="quick-add-operation">
-                                    <i class="fas fa-plus text-primary"></i> Nueva Operación
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#" id="quick-add-asset">
-                                    <i class="fas fa-coins text-warning"></i> Nuevo Asset
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="#" id="quick-complete-historic">
-                                    <i class="fas fa-download text-info"></i> Completar Histórico
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#" id="quick-update-possessions">
-                                    <i class="fas fa-sync text-success"></i> Actualizar Posesiones
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" asp-controller="Portfolio" asp-action="Report">
-                                    <i class="fas fa-chart-pie text-secondary"></i> Ver Reporte
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
+                        <!-- Quick Actions Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="quickActionsDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-bolt"></i> Acciones
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <h6 class="dropdown-header">
+                                        <i class="fas fa-zap"></i> Acciones Rápidas
+                                    </h6>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="#" id="quick-add-operation">
+                                        <i class="fas fa-plus text-primary"></i> Nueva Operación
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" id="quick-add-asset">
+                                        <i class="fas fa-coins text-warning"></i> Nuevo Asset
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="#" id="quick-complete-historic">
+                                        <i class="fas fa-download text-info"></i> Completar Histórico
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" id="quick-update-exchange-rates">
+                                        <i class="fas fa-exchange-alt text-warning"></i> Actualizar Cotizaciones
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" id="quick-update-possessions">
+                                        <i class="fas fa-sync text-success"></i> Actualizar Posesiones
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Portfolio" asp-action="Report">
+                                        <i class="fas fa-chart-pie text-secondary"></i> Ver Reporte
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Portfolio" asp-action="ChartReport">
+                                        <i class="fas fa-chart-line text-primary"></i> Ver Gráficos
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="StockQuote" asp-action="Index">
+                                        <i class="fas fa-search text-success"></i> Cotizaciones Yahoo
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
 
-                    <!-- Asset Quick Search -->
-                    <li class="nav-item ms-2">
-                        <div class="nav-link p-0">
-                            <select id="asset-quick-search" class="form-select form-select-sm" style="min-width: 150px;">
-                                <option value="">🔍 Buscar asset...</option>
-                            </select>
-                        </div>
-                    </li>
-                </ul>
+                        <!-- Asset Quick Search -->
+                        <li class="nav-item ms-2">
+                            <div class="nav-link p-0">
+                                <select id="asset-quick-search" class="form-select form-select-sm" style="min-width: 150px;">
+                                    <option value="">🔍 Buscar asset...</option>
+                                </select>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
 
-    <!-- Breadcrumb (opcional) -->
-    <nav aria-label="breadcrumb" class="bg-light border-bottom">
-        <div class="container-fluid">
-            <ol class="breadcrumb mb-0 py-2">
-                <li class="breadcrumb-item">
-                    <a asp-controller="Home" asp-action="Index">
-                        <i class="fas fa-home"></i> Home
-                    </a>
-                </li>
-                @if (ViewContext.RouteData.Values["Controller"]?.ToString() != "Home")
-                {
-                    <li class="breadcrumb-item active">
-                        @ViewContext.RouteData.Values["Controller"]
+            <!-- Logout button -->
+            <div class="ms-auto">
+                <form method="post" asp-controller="Account" asp-action="Logout" class="d-inline">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Cerrar Sesión</button>
+                </form>
+            </div>
+        </nav>
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="bg-light border-bottom">
+            <div class="container-fluid">
+                <ol class="breadcrumb mb-0 py-2">
+                    <li class="breadcrumb-item">
+                        <a asp-controller="Home" asp-action="Index">
+                            <i class="fas fa-home"></i> Home
+                        </a>
                     </li>
-                }
-                @if (!string.IsNullOrEmpty(ViewContext.RouteData.Values["Action"]?.ToString()) &&
-                ViewContext.RouteData.Values["Action"]?.ToString() != "Index")
-                {
-                    <li class="breadcrumb-item active">
-                        @ViewContext.RouteData.Values["Action"]
-                    </li>
-                }
-            </ol>
-        </div>
-    </nav>
+                    @if (ViewContext.RouteData.Values["Controller"]?.ToString() != "Home")
+                    {
+                        <li class="breadcrumb-item active">
+                            @ViewContext.RouteData.Values["Controller"]
+                        </li>
+                    }
+                    @if (!string.IsNullOrEmpty(ViewContext.RouteData.Values["Action"]?.ToString()) &&
+                    ViewContext.RouteData.Values["Action"]?.ToString() != "Index")
+                    {
+                        <li class="breadcrumb-item active">
+                            @ViewContext.RouteData.Values["Action"]
+                        </li>
+                    }
+                </ol>
+            </div>
+        </nav>
+    }
 
     <!-- Alert container for notifications -->
     <div id="alert-container" class="container-fluid mt-2">
@@ -285,6 +313,11 @@
                 completeHistoric();
             });
 
+            $('#quick-update-exchange-rates').click(function(e) {
+                e.preventDefault();
+                updateExchangeRates();
+            });
+
             $('#quick-update-possessions').click(function(e) {
                 e.preventDefault();
                 updatePossessions();
@@ -381,6 +414,26 @@
                 })
                 .fail(function() {
                     showAlert('danger', 'Error al completar histórico', 'fas fa-exclamation-triangle');
+                });
+        }
+
+        function updateExchangeRates() {
+            showAlert('info', 'Actualizando cotizaciones de monedas...', 'fas fa-spinner fa-spin');
+
+            $.post('@Url.Action("UpdateExchangeRates", "Historic")')
+                .done(function(response) {
+                    if (response.message) {
+                        let message = response.message;
+                        if (response.details) {
+                            message += ` (${response.details.totalProcessed} procesadas)`;
+                        }
+                        showAlert('success', message, 'fas fa-check');
+                    } else if (response.error) {
+                        showAlert('danger', response.error, 'fas fa-exclamation-triangle');
+                    }
+                })
+                .fail(function() {
+                    showAlert('danger', 'Error al actualizar cotizaciones de monedas', 'fas fa-exclamation-triangle');
                 });
         }
 

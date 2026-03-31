@@ -2,6 +2,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using MyFinances.Domain.Model;
 
 [Table("movements")]
 public class Movement
@@ -28,9 +29,21 @@ public class Movement
 
     public int Type { get; set; }
 
+    // Currency relationship - nullable for backward compatibility (null = USD)
+    [Column("currency_id")]
+    public int? CurrencyId { get; set; }
+
+    [ForeignKey(nameof(CurrencyId))]
+    public Currency? Currency { get; set; }
+
+    public string? UserId { get; set; }
+
+    [ForeignKey(nameof(UserId))]
+    public ApplicationUser? User { get; set; }
+
     public override string ToString()
     {
-        return $"Movements(AssetId={AssetId}, Operation={Operation}, Date={Date})";
+        return $"Movements(AssetId={AssetId}, Operation={Operation}, Date={Date}, CurrencyId={CurrencyId})";
     }
 
     public Dictionary<string, object?> ToDict()
@@ -43,7 +56,8 @@ public class Movement
             { "date", Date.ToString("yyyy-MM-dd") },
             { "quantity", Quantity },
             { "price", Price },
-            { "type", Type }
+            { "type", Type },
+            { "currency_id", CurrencyId }
         };
     }
 }

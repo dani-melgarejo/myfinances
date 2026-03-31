@@ -23,9 +23,16 @@ public class MarketData
     [Column(TypeName = "decimal(10,2)")]
     public decimal Close { get; set; }
 
+    // Currency relationship - nullable for backward compatibility (null = USD)
+    [Column("currency_id")]
+    public int? CurrencyId { get; set; }
+
+    [ForeignKey(nameof(CurrencyId))]
+    public Currency? Currency { get; set; }
+
     public override string ToString()
     {
-        return $"MarketData(AssetId={AssetId}, Date={Date}, Close={Close})";
+        return $"MarketData(AssetId={AssetId}, Date={Date}, Close={Close}, CurrencyId={CurrencyId})";
     }
 
     public Dictionary<string, object?> ToDict()
@@ -36,6 +43,7 @@ public class MarketData
             { "asset_id", AssetId },
             { "date", Date.ToString("yyyy-MM-dd") },
             { "close", Close },
+            { "currency_id", CurrencyId },
         };
     }
 }

@@ -8,28 +8,44 @@
 
 <div class="row">
     <div class="col-12">
-        <h2>Reporte de Portafolio</h2>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Reporte de Portafolio</h2>
+            <div>
+                <a asp-controller="Portfolio" asp-action="ChartReport" class="btn btn-outline-primary">
+                    <i class="fas fa-chart-line"></i> Ver Gráficos
+                </a>
+            </div>
+        </div>
 
         <!-- Filtros -->
         <div class="card mb-4">
             <div class="card-body">
                 <form id="report-form">
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="mb-3">
                                 <label for="fechaInicio" class="form-label">Fecha Inicio</label>
                                 <input type="date" class="form-control" id="fechaInicio"
                                        value="@Model.FechaInicio.ToString("yyyy-MM-dd")" />
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="mb-3">
                                 <label for="fechaFin" class="form-label">Fecha Fin</label>
                                 <input type="date" class="form-control" id="fechaFin"
                                        value="@Model.FechaFin.ToString("yyyy-MM-dd")" />
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="currency-select" class="form-label">Moneda de Reporte</label>
+                                <select id="currency-select" class="form-control select2">
+                                    <option value="">USD (Por defecto)</option>
+                                </select>
+                                <small class="form-text text-muted">Seleccione la moneda para mostrar los valores</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
                             <div class="mb-3">
                                 <label class="form-label">&nbsp;</label>
                                 <div>
@@ -68,12 +84,12 @@
                                 <tr>
                                     <th>Tipo</th>
                                     <th>Ticker</th>
-                                    <th>Tenencia Inicial</th>
-                                    <th>Tenencia Final</th>
-                                    <th>Ganancia/Pérdida USD</th>
-                                    <th>Compras</th>
-                                    <th>Ventas</th>
-                                    <th>Inversión Neta</th>
+                                    <th>Tenencia Inicial <span id="currency-header-1">($)</span></th>
+                                    <th>Tenencia Final <span id="currency-header-2">($)</span></th>
+                                    <th>Ganancia/Pérdida <span id="currency-header-3">($)</span></th>
+                                    <th>Compras <span id="currency-header-4">($)</span></th>
+                                    <th>Ventas <span id="currency-header-5">($)</span></th>
+                                    <th>Inversión Neta <span id="currency-header-6">($)</span></th>
                                     <th>% Ganancia/Pérdida</th>
                                     <th>SP500</th>
                                 </tr>
@@ -98,6 +114,40 @@
     <script>
         $(document).ready(function() {
             let reportData = [];
+            let currentCurrency = { code: 'USD', symbol: '$' };
+
+            // Initialize currency select
+            $('#currency-select').select2({
+                placeholder: 'USD (Por defecto)',
+                allowClear: true,
+                ajax: {
+                    url: '@Url.Action("GetCurrencies", "Portfolio")',
+                    dataType: 'json',
+                    delay: 250,
+                    processResults: function (data) {
+                        return {
+                            results: data
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            // Handle currency change
+            $('#currency-select').on('change', function() {
+                const selectedData = $(this).select2('data')[0];
+                
+                if (selectedData && selectedData.symbol) {
+                    currentCurrency = {
+                        code: selectedData.code,
+                        symbol: selectedData.symbol
+                    };
+                } else {
+                    currentCurrency = { code: 'USD', symbol: '$' };
+                }
+                
+                updateCurrencyHeaders();
+            });
 
             $('#btn-generate-report').click(function() {
                 generateReport();
@@ -107,9 +157,16 @@
                 exportToExcel();
             });
 
+            function updateCurrencyHeaders() {
+                const symbol = `(${currentCurrency.symbol})`;
+                $('#currency-header-1, #currency-header-2, #currency-header-3, #currency-header-4, #currency-header-5, #currency-header-6')
+                    .text(symbol);
+            }
+
             function generateReport() {
                 const fechaInicio = $('#fechaInicio').val();
                 const fechaFin = $('#fechaFin').val();
+                const selectedCurrency = $('#currency-select').val();
 
                 if (!fechaInicio || !fechaFin) {
                     alert('Por favor seleccione ambas fechas');
@@ -129,7 +186,8 @@
 
                 const requestData = {
                     fechaInicio: fechaInicio,
-                    fechaFin: fechaFin
+                    fechaFin: fechaFin,
+                    targetCurrencyId: selectedCurrency || null
                 };
 
                 $.ajax({
@@ -142,6 +200,13 @@
 
                         if (response.success) {
                             reportData = response.data;
+                            
+                            // Update current currency from response
+                            if (response.currency) {
+                                currentCurrency = response.currency;
+                                updateCurrencyHeaders();
+                            }
+                            
                             displayReport(response.data);
                             $('#btn-export').prop('disabled', false);
                         } else {
@@ -164,14 +229,14 @@
                         <tr class="${item.tipoReporte === 'TOTAL PORTAFOLIO' ? 'table-warning fw-bold' : ''}">
                             <td>${item.tipoReporte}</td>
                             <td>${item.ticker}</td>
-                            <td class="text-end">$${formatNumber(item.tenenciaInicial)}</td>
-                            <td class="text-end">$${formatNumber(item.tenenciaFinal)}</td>
+                            <td class="text-end">${currentCurrency.symbol}${formatNumber(item.tenenciaInicial)}</td>
+                            <td class="text-end">${currentCurrency.symbol}${formatNumber(item.tenenciaFinal)}</td>
                             <td class="text-end ${item.gananciaPerdidaUsd >= 0 ? 'text-success' : 'text-danger'}">
-                                $${formatNumber(item.gananciaPerdidaUsd)}
+                                ${currentCurrency.symbol}${formatNumber(item.gananciaPerdidaUsd)}
                             </td>
-                            <td class="text-end">$${formatNumber(item.compras)}</td>
-                            <td class="text-end">$${formatNumber(item.ventas)}</td>
-                            <td class="text-end">$${formatNumber(item.inversionNeta)}</td>
+                            <td class="text-end">${currentCurrency.symbol}${formatNumber(item.compras)}</td>
+                            <td class="text-end">${currentCurrency.symbol}${formatNumber(item.ventas)}</td>
+                            <td class="text-end">${currentCurrency.symbol}${formatNumber(item.inversionNeta)}</td>
                             <td class="text-end ${item.porcentajeGananciaPerdida >= 0 ? 'text-success' : 'text-danger'}">
                                 ${formatNumber(item.porcentajeGananciaPerdida)}%
                             </td>
@@ -203,11 +268,11 @@
                     return;
                 }
 
-                // Crear CSV
-                let csv = 'Tipo,Ticker,Valor Inicial,Valor Final,Ganancia/Pérdida USD,Total Invertido,Total Retirado,Inversión Neta,% Ganancia/Pérdida\n';
+                // Crear CSV con la moneda seleccionada
+                let csv = `Tipo,Ticker,Valor Inicial (${currentCurrency.code}),Valor Final (${currentCurrency.code}),Ganancia/Pérdida (${currentCurrency.code}),Total Invertido (${currentCurrency.code}),Total Retirado (${currentCurrency.code}),Inversión Neta (${currentCurrency.code}),% Ganancia/Pérdida,SP500\n`;
 
                 reportData.forEach(function(item) {
-                    csv += `"${item.tipoReporte}","${item.ticker}",${item.valorInicial},${item.valorFinal},${item.gananciaPerdidaUsd},${item.totalInvertido},${item.totalRetirado},${item.inversionNeta},${item.porcentajeGananciaPerdida}\n`;
+                    csv += `"${item.tipoReporte}","${item.ticker}",${item.tenenciaInicial},${item.tenenciaFinal},${item.gananciaPerdidaUsd},${item.compras},${item.ventas},${item.inversionNeta},${item.porcentajeGananciaPerdida},${item.sP500Rendimiento}\n`;
                 });
 
                 // Descargar archivo
@@ -216,12 +281,15 @@
                 const a = document.createElement('a');
                 a.setAttribute('hidden', '');
                 a.setAttribute('href', url);
-                a.setAttribute('download', `reporte_portafolio_${$('#fechaInicio').val()}_${$('#fechaFin').val()}.csv`);
+                a.setAttribute('download', `reporte_portafolio_${currentCurrency.code}_${$('#fechaInicio').val()}_${$('#fechaFin').val()}.csv`);
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
             }
 
+            // Initialize currency headers
+            updateCurrencyHeaders();
+            
             // Generar reporte inicial
             generateReport();
         });

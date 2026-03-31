@@ -1,12 +1,19 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MyFinances.Logic.Interfaces;
 using MyFinances.Logic.Models;
+using Microsoft.AspNetCore.Identity;
+using MyFinances.Domain.Model;
 
 namespace MyFinancesApp.Controllers;
 
-public class StocksController(IMovementService movementService) : Controller
+public class StocksController(
+    IMovementService movementService,
+    ICurrencyService currencyService,
+    UserManager<ApplicationUser> userManager) : Controller
 {
-    private IMovementService _movementService => movementService;
+    private readonly IMovementService _movementService = movementService;
+    private readonly ICurrencyService _currencyService = currencyService;
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
 
     [HttpGet]
     public IActionResult Index()
@@ -24,6 +31,9 @@ public class StocksController(IMovementService movementService) : Controller
     {
         try
         {
+            var user = await _userManager.GetUserAsync(User);
+            filter.UserId = user?.Id;
+
             var result = await _movementService.GetMovementsPagedAsync(filter);
             return Json(new { success = true, data = result });
         }
@@ -34,9 +44,30 @@ public class StocksController(IMovementService movementService) : Controller
     }
 
     [HttpGet]
+    public async Task<IActionResult> GetCurrencies()
+    {
+        try
+        {
+            var currencies = await _currencyService.GetActiveCurrenciesAsync();
+            var result = currencies.Select(c => new {
+                id = c.Id,
+                text = $"{c.Code} - {c.Name}",
+                code = c.Code,
+                symbol = c.Symbol,
+                isDefault = c.IsDefault
+            }).ToList();
+            
+            return Json(result);
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, error = ex.Message });
+        }
+    }
+
+    [HttpGet]
     public IActionResult CreateOrEdit()
     {
-
         return View(new StockMovementViewModel());
     }
 
@@ -47,13 +78,22 @@ public class StocksController(IMovementService movementService) : Controller
         {
             if (ModelState.IsValid)
             {
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                {
+                    TempData["Error"] = "Usuario no autenticado.";
+                    return RedirectToAction("Login", "Account");
+                }
+
                 await _movementService.AddMovementAsync(
                     model.AssetId,
                     model.Operation,
                     model.Date,
                     model.Quantity,
                     model.Price,
-                    model.Type
+                    model.Type,
+                    model.CurrencyId, // Add currency support
+                    user.Id
                 );
 
                 TempData["Success"] = "Operación registrada exitosamente.";

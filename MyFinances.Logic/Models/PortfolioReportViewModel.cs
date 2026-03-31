@@ -11,13 +11,20 @@ public class PortfolioReportViewModel
     public decimal Ventas { get; set; }
     public decimal InversionNeta { get; set; }
     public decimal PorcentajeGananciaPerdida { get; set; }
-    public decimal SP500Rendimiento { get; set; } // Nueva propiedad
+    public decimal SP500Rendimiento { get; set; }
+
+    // Currency display properties
+    public string CurrencyCode { get; set; } = "USD";
+    public string CurrencySymbol { get; set; } = "$";
 }
 
 public class PortfolioReportRequestViewModel
 {
     public DateTime FechaInicio { get; set; } = DateTime.Today.AddMonths(-1);
     public DateTime FechaFin { get; set; } = DateTime.Today;
+    public int? TargetCurrencyId { get; set; } = null; // null = USD by default
+    public string TargetCurrencyCode { get; set; } = "USD";
+    public string TargetCurrencySymbol { get; set; } = "$";
 }
 
 public class MonthlyPortfolioReportViewModel
@@ -31,4 +38,25 @@ public class MonthlyPortfolioReportViewModel
     public decimal InversionNeta { get; set; }
     public decimal PorcentajeGananciaPerdida { get; set; }
     public decimal SP500Rendimiento { get; set; }
+
+    // Currency display properties
+    public string CurrencyCode { get; set; } = "USD";
+    public string CurrencySymbol { get; set; } = "$";
+}
+
+public class DailyPortfolioReportViewModel
+{
+    public DateTime Fecha { get; set; }
+    public decimal TenenciaInicial { get; set; }
+    public decimal TenenciaFinal { get; set; }
+    public decimal GananciaPerdidaUsd { get; set; }
+    public decimal Compras { get; set; }
+    public decimal Ventas { get; set; }
+    public decimal InversionNeta { get; set; }
+    public decimal PorcentajeGananciaPerdida { get; set; }
+    public decimal SP500Rendimiento { get; set; }
+
+    // Currency display properties
+    public string CurrencyCode { get; set; } = "USD";
+    public string CurrencySymbol { get; set; } = "$";
 }

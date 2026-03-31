@@ -107,9 +107,22 @@
 
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label asp-for="CurrencyId" class="form-label">Moneda</label>
+                                <select asp-for="CurrencyId" class="form-control select2" id="currency-select">
+                                    <option value="">USD (Por defecto)</option>
+                                </select>
+                                <small class="form-text text-muted">Si no selecciona ninguna, se utilizará USD por defecto</small>
+                                <span asp-validation-for="CurrencyId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
                                 <label class="form-label">Valor Total (Calculado)</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">$</span>
+                                    <span class="input-group-text" id="currency-symbol">$</span>
                                     <input id="total-value" type="text" class="form-control bg-light" readonly />
                                 </div>
                                 <small class="form-text text-muted">Se calcula automáticamente: Cantidad × Precio</small>
@@ -196,12 +209,23 @@
                     </ul>
                 </div>
 
+                <div class="mb-3">
+                    <h6>💱 Monedas:</h6>
+                    <ul class="list-unstyled">
+                        <li><span class="badge bg-success">$ USD</span> - Dólar (Por defecto)</li>
+                        <li><span class="badge bg-secondary">€ EUR</span> - Euro</li>
+                        <li><span class="badge bg-info">$ ARS</span> - Peso Argentino</li>
+                        <li><small class="text-muted">Y más...</small></li>
+                    </ul>
+                </div>
+
                 @if (isEdit)
                 {
                     <div class="alert alert-info">
                         <small>
                             <strong>⚠️ Nota:</strong> Al editar una operación, el asset no se puede cambiar.
                             Si necesitas cambiar el asset, elimina esta operación y crea una nueva.
+                            La moneda sí se puede modificar.
                         </small>
                     </div>
                 }
@@ -210,7 +234,8 @@
                     <div class="alert alert-success">
                         <small>
                             <strong>💡 Consejo:</strong> Puedes buscar assets escribiendo su ticker en el campo Asset.
-                            Si no existe, créalo primero en la sección de Assets.
+                            Si no existe, créalo primero en la sección de Assets. 
+                            <br><strong>💱 Moneda:</strong> Si no seleccionas ninguna moneda, se utilizará USD por defecto.
                         </small>
                     </div>
                 }
@@ -268,6 +293,36 @@
                 });
             }
 
+            // Inicializar Select2 para currency
+            $('#currency-select').select2({
+                placeholder: 'USD (Por defecto)',
+                allowClear: true,
+                ajax: {
+                    url: '@Url.Action("GetCurrencies", "Stocks")',
+                    dataType: 'json',
+                    delay: 250,
+                    processResults: function (data) {
+                        return {
+                            results: data
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            // Manejar cambio de moneda
+            $('#currency-select').on('change', function() {
+                const selectedData = $(this).select2('data')[0];
+                
+                if (selectedData && selectedData.symbol) {
+                    $('#currency-symbol').text(selectedData.symbol);
+                } else {
+                    $('#currency-symbol').text('$'); // USD por defecto
+                }
+                
+                calculateTotalValue();
+            });
+
             // Establecer fecha actual por defecto si no hay valor
             if (!$('#Date').val()) {
                 $('#Date').val(new Date().toISOString().split('T')[0]);
@@ -293,6 +348,19 @@
             // Cargar resumen del asset (solo para edición)
             if (isEdit) {
                 loadAssetSummary(@Model.AssetId);
+                
+                // Si hay una moneda seleccionada en edición, cargarla
+                @if (Model.CurrencyId.HasValue)
+                {
+                    <text>
+                    // Preseleccionar la moneda en modo edición
+                    setTimeout(function() {
+                        const currencyOption = new Option('@Model.CurrencyCode - @Model.CurrencySymbol', '@Model.CurrencyId', true, true);
+                        $('#currency-select').append(currencyOption).trigger('change');
+                        $('#currency-symbol').text('@Model.CurrencySymbol');
+                    }, 500);
+                    </text>
+                }
             }
 
             // Calcular valor inicial
@@ -314,6 +382,20 @@
             } else if (operation === 'SELL') {
                 $('#total-value').removeClass('text-success').addClass('text-danger');
             }
+        }
+
+        function updateCurrencySymbol(currencyId) {
+            let symbol = '$'; // Símbolo por defecto
+            // Aquí puedes agregar condiciones para otros IDs de moneda y sus símbolos correspondientes
+            if (currencyId === 'EUR') {
+                symbol = '€';
+            } else if (currencyId === 'GBP') {
+                symbol = '£';
+            } else if (currencyId === 'JPY') {
+                symbol = '¥';
+            }
+
+            $('#currency-symbol').text(symbol);
         }
 
         function validateForm() {

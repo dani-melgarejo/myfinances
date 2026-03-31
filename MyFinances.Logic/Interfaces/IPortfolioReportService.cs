@@ -4,7 +4,7 @@ namespace MyFinances.Logic.Interfaces;
 
 public interface IPortfolioReportService
 {
-    Task<IEnumerable<PortfolioReportViewModel>> GetPortfolioReportAsync(DateTime fechaInicio, DateTime fechaFin);
-
-    Task<IEnumerable<MonthlyPortfolioReportViewModel>> GetMonthlyPortfolioReportAsync(DateTime fechaInicio, DateTime fechaFin);
+    Task<IEnumerable<PortfolioReportViewModel>> GetPortfolioReportAsync(DateTime fechaInicio, DateTime fechaFin, string userId, int? targetCurrencyId = null);
+    Task<IEnumerable<MonthlyPortfolioReportViewModel>> GetMonthlyPortfolioReportAsync(DateTime fechaInicio, DateTime fechaFin, string userId, int? targetCurrencyId = null);
+    Task<IEnumerable<DailyPortfolioReportViewModel>> GetDailyPortfolioReportAsync(DateTime fechaInicio, DateTime fechaFin, string userId, int? targetCurrencyId = null);
 }

@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using MyFinancesApp.Models;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MyFinancesApp.Controllers;
 
@@ -8,6 +9,7 @@ public class HomeController(ILogger<HomeController> logger) : Controller
 {
     private readonly ILogger<HomeController> _logger = logger;
 
+    [Authorize]
     public IActionResult Index()
     {
         return View();
