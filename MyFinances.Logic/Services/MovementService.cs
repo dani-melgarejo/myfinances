@@ -241,10 +241,25 @@ public class MovementService(ApplicationDbContext context, IPossessionService po
 
     public async Task<IEnumerable<int>> GetAssetIdsByUserAsync(string userId)
     {
-        return await _context.Movements
+        // Obtener los asset IDs del usuario
+        var userAssetIds = await _context.Movements
             .Where(m => m.UserId == userId)
             .Select(m => m.AssetId)
             .Distinct()
             .ToListAsync();
+
+        // Obtener el ID del S&P 500 (^GSPC) si existe
+        var sp500Asset = await _context.Assets
+            .Where(a => a.Ticker == "^GSPC")
+            .Select(a => a.Id)
+            .FirstOrDefaultAsync();
+
+        // Si existe el S&P 500 y no está ya en la lista, agregarlo
+        if (sp500Asset != 0 && !userAssetIds.Contains(sp500Asset))
+        {
+            userAssetIds.Add(sp500Asset);
+        }
+
+        return userAssetIds;
     }
 }

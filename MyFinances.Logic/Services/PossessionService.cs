@@ -28,56 +28,79 @@ public class PossessionService(ApplicationDbContext context, ILogger<PossessionS
                 return;
             }
 
-            // 1. Eliminar posesiones existentes para este asset y usuario
-            await _context.Database.ExecuteSqlRawAsync(
-                "DELETE FROM possessions WHERE asset_id = {0} AND UserId = {1}", assetId, userId);
+            // 1. Eliminar posesiones existentes para este asset y usuario usando EF
+            var existingPossessions = await _context.Possessions
+                .Where(p => p.AssetId == assetId && p.UserId == userId)
+                .ToListAsync();
 
-            // 2. Insertar nuevas posesiones basadas en MarketData y Movements
-            // Updated SQL to include currency_id from the asset
-            var sql = @"
-                    INSERT INTO possessions (date, asset_id, quantity, TotalPrice, Worth, currency_id, UserId)
-                    SELECT 
-                        md.Date,
-                        md.asset_id,
-                        COALESCE(
-                            (SELECT 
-                                SUM(CASE 
-                                    WHEN m.Operation = 0 THEN m.Quantity  
-                                    WHEN m.Operation = 1 THEN -m.Quantity 
-                                    ELSE 0 
-                                END)
-                             FROM movements m 
-                             WHERE m.asset_id = md.asset_id 
-                               AND m.Date <= md.Date
-                               AND m.UserId = {2}
-                            ), 0
-                        ) as Quantity,
-                        COALESCE(
-                            (SELECT 
-                                SUM(CASE 
-                                    WHEN m.Operation = 0 THEN m.Quantity  
-                                    WHEN m.Operation = 1 THEN -m.Quantity 
-                                    ELSE 0 
-                                END)
-                             FROM movements m 
-                             WHERE m.asset_id = md.asset_id 
-                               AND m.Date <= md.Date
-                               AND m.UserId = {2}
-                            ), 0
-                        ) * md.Close as TotalPrice,
-                        0 as Worth, -- Se calculará después
-                        {1} as currency_id, -- Currency from asset
-                        {2} as UserId -- User from parameter
-                    FROM stocks_data md
-                    WHERE md.asset_id = {0}
-                    ORDER BY md.Date";
+            if (existingPossessions.Any())
+            {
+                _context.Possessions.RemoveRange(existingPossessions);
+                await _context.SaveChangesAsync();
+            }
 
-            await _context.Database.ExecuteSqlRawAsync(sql, assetId, asset.CurrencyId, userId);
+            // 2. Obtener todos los datos de mercado para este asset
+            var marketDataList = await _context.MarketData
+                .Where(md => md.AssetId == assetId)
+                .OrderBy(md => md.Date)
+                .ToListAsync();
 
-            // 3. Calcular Worth usando CTE equivalente
-            await CalculateWorthForAssetAsync(assetId, userId);
+            if (!marketDataList.Any())
+            {
+                _logger.LogWarning($"No hay datos de mercado para asset {assetId}");
+                return;
+            }
 
-            _logger.LogInformation($"✅ Posesiones actualizadas para asset {assetId} con moneda {asset.Currency?.Code ?? "USD"}");
+            // 3. Obtener todos los movimientos del usuario para este asset
+            var movements = await _context.Movements
+                .Where(m => m.AssetId == assetId && m.UserId == userId)
+                .OrderBy(m => m.Date)
+                .ToListAsync();
+
+            // 4. Crear nuevas posesiones basadas en MarketData y Movements
+            var newPossessions = new List<Possession>();
+
+            foreach (var marketData in marketDataList)
+            {
+                // Calcular la cantidad acumulada hasta esta fecha
+                var quantityUntilDate = movements
+                    .Where(m => m.Date <= marketData.Date)
+                    .Sum(m => m.Operation == 0 ? m.Quantity : -m.Quantity);
+
+                // Calcular el precio total (cantidad * precio de cierre)
+                var totalPrice = quantityUntilDate * marketData.Close;
+
+                // Crear la posesión
+                var possession = new Possession
+                {
+                    Date = marketData.Date,
+                    AssetId = assetId,
+                    Quantity = quantityUntilDate,
+                    TotalPrice = totalPrice,
+                    Worth = 0, // Se calculará después
+                    CurrencyId = asset.CurrencyId,
+                    UserId = userId,
+                    Asset = asset
+                };
+
+                newPossessions.Add(possession);
+            }
+
+            // 5. Agregar todas las posesiones a la base de datos
+            if (newPossessions.Any())
+            {
+                await _context.Possessions.AddRangeAsync(newPossessions);
+                await _context.SaveChangesAsync();
+
+                // 6. Calcular Worth
+                await CalculateWorthForAssetAsync(assetId, userId);
+
+                _logger.LogInformation($"✅ {newPossessions.Count} posesiones creadas para asset {assetId} con moneda {asset.Currency?.Code ?? "USD"}");
+            }
+            else
+            {
+                _logger.LogWarning($"No se crearon posesiones para asset {assetId}");
+            }
         }
         catch (Exception ex)
         {
@@ -161,18 +184,31 @@ public class PossessionService(ApplicationDbContext context, ILogger<PossessionS
         {
             _logger.LogInformation("Updating currency information for all possessions");
 
-            // Update possessions to match their asset's currency
-            var sql = @"
-                UPDATE possessions p
-                INNER JOIN assets a ON p.asset_id = a.Id
-                SET p.currency_id = a.currency_id
-                WHERE p.currency_id != a.currency_id 
-                   OR (p.currency_id IS NULL AND a.currency_id IS NOT NULL)
-                   OR (p.currency_id IS NOT NULL AND a.currency_id IS NULL)";
+            // Get all possessions with their assets
+            var possessions = await _context.Possessions
+                .Include(p => p.Asset)
+                .Where(p => p.Asset != null && 
+                       (p.CurrencyId != p.Asset.CurrencyId || 
+                        (p.CurrencyId == null && p.Asset.CurrencyId != null) ||
+                        (p.CurrencyId != null && p.Asset.CurrencyId == null)))
+                .ToListAsync();
 
-            var updatedRows = await _context.Database.ExecuteSqlRawAsync(sql);
-            
-            _logger.LogInformation($"✅ Updated currency for {updatedRows} possessions");
+            if (possessions.Any())
+            {
+                // Update each possession's currency to match its asset
+                foreach (var possession in possessions)
+                {
+                    possession.CurrencyId = possession.Asset!.CurrencyId;
+                }
+
+                await _context.SaveChangesAsync();
+                
+                _logger.LogInformation($"✅ Updated currency for {possessions.Count} possessions");
+            }
+            else
+            {
+                _logger.LogInformation("No possessions needed currency update");
+            }
         }
         catch (Exception ex)
         {

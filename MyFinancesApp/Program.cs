@@ -42,10 +42,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 // Configurar Entity Framework
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(
+    options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(8, 4, 8)), // Especificar versión de MySQL
-        mySqlOptions => mySqlOptions.EnableRetryOnFailure(
+        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
             maxRetryCount: 3,
             maxRetryDelay: TimeSpan.FromSeconds(30),
             errorNumbersToAdd: null)

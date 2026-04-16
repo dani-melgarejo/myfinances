@@ -6,6 +6,7 @@ public class PortfolioReportViewModel
     public string Ticker { get; set; }
     public decimal TenenciaInicial { get; set; }
     public decimal TenenciaFinal { get; set; }
+    public decimal TenenciaInicialMasInversionNeta { get; set; }
     public decimal GananciaPerdidaUsd { get; set; }
     public decimal Compras { get; set; }
     public decimal Ventas { get; set; }

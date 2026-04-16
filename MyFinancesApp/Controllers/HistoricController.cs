@@ -3,6 +3,8 @@ using MyFinances.Logic.Interfaces;
 using MyFinances.Logic.Models;
 using Microsoft.AspNetCore.Identity;
 using MyFinances.Domain.Model;
+using Microsoft.Extensions.Options;
+using MyFinances.Logic.Configuration;
 
 namespace MyFinancesApp.Controllers;
 
@@ -13,7 +15,8 @@ public class HistoricController(
     IPossessionService possessionService,
     IExchangeRateApiService exchangeRateApiService,
     IMovementService movementService,
-    UserManager<ApplicationUser> userManager) : Controller
+    UserManager<ApplicationUser> userManager,
+    IOptions<AppConfig> appConfig) : Controller
 {
     private readonly IAssetService _assetService = assetService;
     private readonly IHistoricService _historicService = historicService;
@@ -22,10 +25,18 @@ public class HistoricController(
     private readonly IExchangeRateApiService _exchangeRateApiService = exchangeRateApiService;
     private readonly IMovementService _movementService = movementService;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly MarketHoursConfig _marketHours = appConfig.Value.MarketHours;
 
     [HttpGet]
     public IActionResult Index()
     {
+        // Pasar información del mercado a la vista
+        ViewBag.IsMarketOpen = _marketHours.IsMarketOpen();
+        ViewBag.EffectiveDataDate = _marketHours.GetEffectiveDataDate();
+        ViewBag.MarketOpenTimeUtc = _marketHours.OpenTimeUtc;
+        ViewBag.MarketCloseTimeUtc = _marketHours.CloseTimeUtc;
+        ViewBag.CurrentTimeUtc = DateTime.UtcNow;
+        
         return View();
     }
 
@@ -43,14 +54,19 @@ public class HistoricController(
             var userAssetIds = await _movementService.GetAssetIdsByUserAsync(user.Id);
             var assets = await _assetService.GetAssetsByIdsAsync(userAssetIds);
 
-            var today = DateTime.Now.Date;
-            var lastTradingDay = GetLastTradingDay(today);
+            // Usar la fecha efectiva basada en el estado del mercado
+            var effectiveDate = _marketHours.GetEffectiveDataDate();
+            var isMarketOpen = _marketHours.IsMarketOpen();
+
+            var statusMessage = isMarketOpen 
+                ? $"Mercado ABIERTO - Trayendo datos hasta: {effectiveDate:yyyy-MM-dd} (día hábil anterior)" 
+                : $"Mercado CERRADO - Trayendo datos hasta: {effectiveDate:yyyy-MM-dd} (incluye día actual)";
 
             foreach (var asset in assets)
             {
                 var lastData = await _marketDataService.GetLastMarketDataAsync(asset.Id);
 
-                if (lastData != null && lastData.Date >= lastTradingDay)
+                if (lastData != null && lastData.Date >= effectiveDate)
                 {
                     continue; // Skip if data is already up to date
                 }
@@ -61,6 +77,7 @@ public class HistoricController(
                     dateFrom = lastData.Date.AddDays(1).Date;
                 }
 
+                // El servicio usa automáticamente la fecha efectiva configurada
                 await _historicService.GetPostsAsync(asset.Id, dateFrom, null);
             }
 
@@ -72,28 +89,22 @@ public class HistoricController(
             // Update currency information for all possessions to ensure consistency
             await possessionService.UpdateAllPossessionsCurrencyAsync();
 
-            return Json(new { message = "Datos históricos completados para todos los assets y posesiones actualizadas con información de moneda" });
+            return Json(new 
+            { 
+                message = $"Datos históricos completados para todos los assets y posesiones actualizadas. {statusMessage}",
+                marketStatus = new
+                {
+                    isOpen = isMarketOpen,
+                    effectiveDate = effectiveDate.ToString("yyyy-MM-dd"),
+                    currentTimeUtc = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                    openTimeUtc = _marketHours.OpenTimeUtc,
+                    closeTimeUtc = _marketHours.CloseTimeUtc
+                }
+            });
         }
         catch (Exception ex)
         {
             return BadRequest(new { error = ex.Message });
-        }
-    }
-
-    private DateTime GetLastTradingDay(DateTime date)
-    {
-        var dayOfWeek = date.DayOfWeek;
-        if (dayOfWeek == DayOfWeek.Saturday)
-        {
-            return date.AddDays(-1); // Friday
-        }
-        else if (dayOfWeek == DayOfWeek.Sunday)
-        {
-            return date.AddDays(-2); // Friday
-        }
-        else
-        {
-            return date; // Weekday
         }
     }
 

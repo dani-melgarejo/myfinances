@@ -1,223 +1,251 @@
-﻿@model MyFinances.Logic.Models.StockMovementFilterViewModel
+@model MyFinances.Logic.Models.StockMovementFilterViewModel
 
 @{
     ViewData["Title"] = "Operaciones";
 }
 
-<div class="row">
-    <div class="col-12">
-        <h2>📈 Operaciones de Stocks</h2>
-
-        <!-- Filtros -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    🔍 Filtros
-                    <button class="btn btn-sm btn-outline-secondary float-end" type="button" id="btn-clear-filters">
-                        ❌ Limpiar
-                    </button>
-                </h5>
+<div class="dashboard-container">
+    <!-- Page Header -->
+    <div class="page-header-container mb-4">
+        <div class="page-header-content">
+            <div class="page-header-left">
+                <h1 class="page-title">Operaciones</h1>
+                <nav aria-label="breadcrumb" class="page-breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">ZZ Portfolio Manager</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Operaciones</li>
+                    </ol>
+                </nav>
             </div>
-            <div class="card-body">
-                <form id="filter-form">
-                    <div class="row">
-                        <div class="col-md-2">
-                            <div class="mb-3">
-                                <label for="assetSelect" class="form-label">Asset</label>
-                                <select class="form-control select2" id="assetSelect" name="AssetId">
-                                    <option value="">Todos los assets...</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="mb-3">
-                                <label for="tickerFilter" class="form-label">Ticker</label>
-                                <input type="text" class="form-control" id="tickerFilter" name="Ticker"
-                                       placeholder="Ej: AAPL" />
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="mb-3">
-                                <label for="operationFilter" class="form-label">Operación</label>
-                                <select class="form-control" id="operationFilter" name="Operation">
-                                    <option value="">Todas</option>
-                                    <option value="0">Compra</option>
-                                    <option value="1">Venta</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="mb-3">
-                                <label for="typeFilter" class="form-label">Tipo</label>
-                                <select class="form-control" id="typeFilter" name="Type">
-                                    <option value="">Todos</option>
-                                    <option value="STOCK">Acción</option>
-                                    <option value="CRYPTO">Criptomoneda</option>
-                                    <option value="BOND">Bono</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="mb-3">
-                                <label for="fechaDesde" class="form-label">Fecha Desde</label>
-                                <input type="date" class="form-control" id="fechaDesde" name="FechaDesde"
-                                       value="@Model.FechaDesde?.ToString("yyyy-MM-dd")" />
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="mb-3">
-                                <label for="fechaHasta" class="form-label">Fecha Hasta</label>
-                                <input type="date" class="form-control" id="fechaHasta" name="FechaHasta"
-                                       value="@Model.FechaHasta?.ToString("yyyy-MM-dd")" />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-2">
-                            <div class="mb-3">
-                                <label for="pageSize" class="form-label">Registros por página</label>
-                                <select class="form-control" id="pageSize" name="PageSize">
-                                    <option value="10">10</option>
-                                    <option value="25" selected>25</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="mb-3">
-                                <label class="form-label">&nbsp;</label>
-                                <div>
-                                    <button type="button" id="btn-search" class="btn btn-primary w-100">
-                                        🔍 Buscar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+            <div class="page-actions">
+                <a asp-action="CreateOrEdit" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Nueva Operaci�n
+                </a>
+                <button id="btn-export" class="btn btn-outline-secondary" disabled>
+                    <i class="fas fa-download me-1"></i> Exportar
+                </button>
             </div>
         </div>
+    </div>
 
-        <!-- Resumen -->
-        <div class="row mb-4" id="summary-cards" style="display: none;">
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <h6 class="card-title">💰 Total Invertido</h6>
-                        <h4 id="total-invested">$0.00</h4>
+    <!-- Filtros -->
+    <div class="filter-card mb-4">
+        <div class="filter-card-header">
+            <div class="filter-title">
+                <i class="fas fa-filter me-2"></i> Filtros
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" type="button" id="btn-clear-filters">
+                <i class="fas fa-times me-1"></i> Limpiar
+            </button>
+        </div>
+        <div class="filter-card-body">
+            <form id="filter-form">
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <label for="assetSelect" class="form-label">Asset</label>
+                        <select class="form-control select2" id="assetSelect" name="AssetId">
+                            <option value="">Todos los assets...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="tickerFilter" class="form-label">Ticker</label>
+                        <input type="text" class="form-control" id="tickerFilter" name="Ticker"
+                               placeholder="Ej: AAPL" />
+                    </div>
+                    <div class="col-md-2">
+                        <label for="operationFilter" class="form-label">Operaci�n</label>
+                        <select class="form-control" id="operationFilter" name="Operation">
+                            <option value="">Todas</option>
+                            <option value="0">Compra</option>
+                            <option value="1">Venta</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="typeFilter" class="form-label">Tipo</label>
+                        <select class="form-control" id="typeFilter" name="Type">
+                            <option value="">Todos</option>
+                            <option value="STOCK">Acci�n</option>
+                            <option value="CRYPTO">Criptomoneda</option>
+                            <option value="BOND">Bono</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="fechaDesde" class="form-label">Fecha Desde</label>
+                        <input type="date" class="form-control" id="fechaDesde" name="FechaDesde"
+                               value="@Model.FechaDesde?.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-2">
+                        <label for="fechaHasta" class="form-label">Fecha Hasta</label>
+                        <input type="date" class="form-control" id="fechaHasta" name="FechaHasta"
+                               value="@Model.FechaHasta?.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-2">
+                        <label for="pageSize" class="form-label">Registros por p�gina</label>
+                        <select class="form-control" id="pageSize" name="PageSize">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button type="button" id="btn-search" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-1"></i> Buscar
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-info text-white">
-                    <div class="card-body">
-                        <h6 class="card-title">💸 Total Vendido</h6>
-                        <h4 id="total-sold">$0.00</h4>
+            </form>
+        </div>
+    </div>
+
+    <!-- Metrics Cards Row -->
+    <div class="row g-3 mb-4" id="summary-cards" style="display: none;">
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="metric-card">
+                <div class="metric-card-body">
+                    <div class="metric-header">
+                        <div class="metric-title">TOTAL INVERTIDO</div>
+                        <div class="metric-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-warning text-white">
-                    <div class="card-body">
-                        <h6 class="card-title">📊 Inversión Neta</h6>
-                        <h4 id="net-investment">$0.00</h4>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <h6 class="card-title">📈 Total Operaciones</h6>
-                        <h4 id="total-operations">0</h4>
+                    <div class="metric-value" id="total-invested">$0.00</div>
+                    <div class="metric-badge metric-badge-success">
+                        <span class="badge-text">Total de compras</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Loading -->
-        <div id="loading" class="text-center d-none">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
-            </div>
-            <p class="mt-2">Cargando operaciones...</p>
-        </div>
-
-        <!-- Tabla de resultados -->
-        <div id="data-container">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        📊 Operaciones
-                        <span id="total-records" class="badge bg-secondary ms-2">0</span>
-                    </h5>
-                    <div>
-                        <a asp-action="CreateOrEdit" class="btn btn-success btn-sm me-2">
-                            ➕ Nueva Operación
-                        </a>
-                        <button id="btn-export" class="btn btn-info btn-sm" disabled>
-                            📄 Exportar
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0" id="movements-table">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th data-sort="ticker">
-                                        📊 Ticker <span class="sort-icon">↕️</span>
-                                    </th>
-                                    <th data-sort="operation">
-                                        🔄 Operación <span class="sort-icon">↕️</span>
-                                    </th>
-                                    <th data-sort="date">
-                                        📅 Fecha <span class="sort-icon">↕️</span>
-                                    </th>
-                                    <th data-sort="quantity" class="text-end">
-                                        📦 Cantidad <span class="sort-icon">↕️</span>
-                                    </th>
-                                    <th data-sort="price" class="text-end">
-                                        💰 Precio <span class="sort-icon">↕️</span>
-                                    </th>
-                                    <th class="text-end">
-                                        💵 Valor Total
-                                    </th>
-                                    <th data-sort="type">
-                                        🏷️ Tipo <span class="sort-icon">↕️</span>
-                                    </th>
-                                    <th class="text-center">⚙️ Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Los datos se cargarán dinámicamente aquí -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <div id="pagination-info" class="text-muted">
-                                <!-- Información de paginación -->
-                            </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="metric-card">
+                <div class="metric-card-body">
+                    <div class="metric-header">
+                        <div class="metric-title">TOTAL VENDIDO</div>
+                        <div class="metric-icon">
+                            <i class="fas fa-hand-holding-usd"></i>
                         </div>
-                        <div class="col-md-6">
-                            <nav aria-label="Paginación">
-                                <ul class="pagination pagination-sm justify-content-end mb-0" id="pagination">
-                                    <!-- Paginación se generará dinámicamente -->
-                                </ul>
-                            </nav>
-                        </div>
+                    </div>
+                    <div class="metric-value" id="total-sold">$0.00</div>
+                    <div class="metric-badge metric-badge-success">
+                        <span class="badge-text">Total de ventas</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Mensaje de error -->
-        <div id="error-message" class="alert alert-danger d-none" role="alert">
-            <!-- El mensaje de error se mostrará aquí -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="metric-card">
+                <div class="metric-card-body">
+                    <div class="metric-header">
+                        <div class="metric-title">INVERSI�N NETA</div>
+                        <div class="metric-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value" id="net-investment">$0.00</div>
+                    <div class="metric-badge" id="net-investment-badge">
+                        <span class="badge-text">Diferencia compra-venta</span>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="metric-card">
+                <div class="metric-card-body">
+                    <div class="metric-header">
+                        <div class="metric-title">OPERACIONES</div>
+                        <div class="metric-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value" id="total-operations">0</div>
+                    <div class="metric-badge metric-badge-neutral">
+                        <span class="badge-text">Total de movimientos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="text-center d-none py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-3 text-muted">Cargando operaciones...</p>
+    </div>
+
+    <!-- Tabla de resultados -->
+    <div id="data-container">
+        <div class="data-card">
+            <div class="data-card-header">
+                <div class="data-card-title">
+                    <i class="fas fa-list me-2"></i> Operaciones
+                    <span id="total-records" class="records-badge">0</span>
+                </div>
+            </div>
+            <div class="data-card-body">
+                <div class="table-responsive">
+                    <table class="table modern-table" id="movements-table">
+                        <thead>
+                            <tr>
+                                <th data-sort="ticker">
+                                    Ticker <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th data-sort="operation">
+                                    Operaci�n <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th data-sort="date">
+                                    Fecha <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th data-sort="quantity" class="text-end">
+                                    Cantidad <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th data-sort="price" class="text-end">
+                                    Precio <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="text-end">
+                                    Valor Total
+                                </th>
+                                <th data-sort="type">
+                                    Tipo <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Los datos se cargar�n din�micamente aqu� -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="data-card-footer">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div id="pagination-info" class="pagination-info">
+                            <!-- Informaci�n de paginaci�n -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <nav aria-label="Paginaci�n">
+                            <ul class="pagination pagination-modern justify-content-end mb-0" id="pagination">
+                                <!-- Paginaci�n se generar� din�micamente -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensaje de error -->
+    <div id="error-message" class="alert alert-danger d-none" role="alert">
+        <!-- El mensaje de error se mostrar� aqu� -->
     </div>
 </div>
 
@@ -358,8 +386,8 @@
                 if (result.data.length === 0) {
                     tbody.append(`
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
-                                📭<br>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block" style="opacity: 0.3;"></i>
                                 No se encontraron operaciones con los filtros aplicados
                             </td>
                         </tr>
@@ -367,8 +395,8 @@
                 } else {
                     result.data.forEach(function(item) {
                         const operationBadge = item.operation === 0
-                            ? '<span class="badge bg-success">🛒 Compra</span>'
-                            : '<span class="badge bg-danger">💸 Venta</span>';
+                            ? '<span class="badge badge-success">Compra</span>'
+                            : '<span class="badge badge-danger">Venta</span>';
 
                         const typeBadge = getTypeBadge(item.type);
 
@@ -382,15 +410,15 @@
                                 <td class="text-end"><strong>$${formatNumber(item.totalValue, 2)}</strong></td>
                                 <td>${typeBadge}</td>
                                 <td class="text-center">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <button class="btn btn-outline-primary btn-icon" onclick="editMovement(${item.id})" title="Editar">
-                                            ✏️
+                                    <div class="action-buttons">
+                                        <button class="btn-action btn-action-primary" onclick="editMovement(${item.id})" title="Editar">
+                                            <i class="fas fa-edit"></i>
                                         </button>
-                                        <button class="btn btn-outline-info btn-icon" onclick="viewDetails(${item.id})" title="Ver detalles">
-                                            👁️
+                                        <button class="btn-action btn-action-info" onclick="viewDetails(${item.id})" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="btn btn-outline-danger btn-icon" onclick="deleteMovement(${item.id})" title="Eliminar">
-                                            🗑️
+                                        <button class="btn-action btn-action-danger" onclick="deleteMovement(${item.id})" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -405,7 +433,7 @@
                 $('#data-container').removeClass('d-none');
             }
 
-           <!-- Views/Stocks/Index.cshtml - CONTINUACIÓN -->
+           <!-- Views/Stocks/Index.cshtml - CONTINUACI�N -->
 
             function updateSummary(result) {
                 $('#total-invested').text('$' + formatNumber(result.totalInvested, 2));
@@ -413,16 +441,19 @@
                 $('#net-investment').text('$' + formatNumber(result.netInvestment, 2));
                 $('#total-operations').text(result.total);
 
-                // Cambiar color de inversión neta según si es positiva o negativa
-                const netCard = $('#net-investment').closest('.card');
-                netCard.removeClass('bg-warning bg-success bg-danger');
+                // Actualizar badge de inversi�n neta seg�n si es positiva o negativa
+                const netBadge = $('#net-investment-badge');
+                netBadge.removeClass('metric-badge-success metric-badge-danger metric-badge-neutral');
 
                 if (result.netInvestment > 0) {
-                    netCard.addClass('bg-success');
+                    netBadge.addClass('metric-badge-success');
+                    netBadge.find('.badge-text').text('Inversi�n positiva');
                 } else if (result.netInvestment < 0) {
-                    netCard.addClass('bg-danger');
+                    netBadge.addClass('metric-badge-danger');
+                    netBadge.find('.badge-text').text('Inversi�n negativa');
                 } else {
-                    netCard.addClass('bg-warning');
+                    netBadge.addClass('metric-badge-neutral');
+                    netBadge.find('.badge-text').text('Diferencia compra-venta');
                 }
 
                 $('#summary-cards').show();
@@ -440,18 +471,18 @@
 
                 if (result.totalPages <= 1) return;
 
-                // Botón anterior
+                // Bot�n anterior
                 if (result.page > 1) {
                     pagination.append(`
                         <li class="page-item">
                             <a class="page-link" href="#" onclick="goToPage(${result.page - 1})">
-                                ⬅️
+                                ??
                             </a>
                         </li>
                     `);
                 }
 
-                // Números de página
+                // N�meros de p�gina
                 const startPage = Math.max(1, result.page - 2);
                 const endPage = Math.min(result.totalPages, result.page + 2);
 
@@ -478,12 +509,12 @@
                     pagination.append(`<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${result.totalPages})">${result.totalPages}</a></li>`);
                 }
 
-                // Botón siguiente
+                // Bot�n siguiente
                 if (result.page < result.totalPages) {
                     pagination.append(`
                         <li class="page-item">
                             <a class="page-link" href="#" onclick="goToPage(${result.page + 1})">
-                                ➡️
+                                ??
                             </a>
                         </li>
                     `);
@@ -506,16 +537,16 @@
                         if (response.success) {
                             showDetailsModal(response.data);
                         } else {
-                            alert('❌ Error: ' + response.error);
+                            alert('? Error: ' + response.error);
                         }
                     })
                     .fail(function() {
-                        alert('❌ Error al obtener los detalles');
+                        alert('? Error al obtener los detalles');
                     });
             };
 
             window.deleteMovement = function(id) {
-                if (confirm('🗑️ ¿Está seguro de que desea eliminar esta operación?')) {
+                if (confirm('??? �Est� seguro de que desea eliminar esta operaci�n?')) {
                     $.post('@Url.Action("Delete", "Stocks")', { id: id })
                         .done(function(response) {
                             if (response.success) {
@@ -526,13 +557,13 @@
                             }
                         })
                         .fail(function() {
-                            showAlert('danger', 'Error al eliminar la operación');
+                            showAlert('danger', 'Error al eliminar la operaci�n');
                         });
                 }
             };
 
             function showDetailsModal(data) {
-                const operationText = data.operation === 0 ? '🛒 Compra' : '💸 Venta';
+                const operationText = data.operation === 0 ? '?? Compra' : '?? Venta';
                 const operationClass = data.operation === 0 ? 'text-success' : 'text-danger';
 
                 const modalHtml = `
@@ -540,45 +571,45 @@
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">📊 Detalles - ${data.ticker}</h5>
+                                    <h5 class="modal-title">?? Detalles - ${data.ticker}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
                                     <dl class="row">
-                                        <dt class="col-sm-4">📊 Ticker:</dt>
+                                        <dt class="col-sm-4">?? Ticker:</dt>
                                         <dd class="col-sm-8"><strong>${data.ticker}</strong></dd>
 
-                                        <dt class="col-sm-4">🔄 Operación:</dt>
+                                        <dt class="col-sm-4">?? Operaci�n:</dt>
                                         <dd class="col-sm-8 ${operationClass}"><strong>${operationText}</strong></dd>
 
-                                        <dt class="col-sm-4">📅 Fecha:</dt>
+                                        <dt class="col-sm-4">?? Fecha:</dt>
                                         <dd class="col-sm-8">${formatDate(data.date)}</dd>
 
-                                        <dt class="col-sm-4">📦 Cantidad:</dt>
+                                        <dt class="col-sm-4">?? Cantidad:</dt>
                                         <dd class="col-sm-8">${formatNumber(data.quantity, 8)}</dd>
 
-                                        <dt class="col-sm-4">💰 Precio:</dt>
+                                        <dt class="col-sm-4">?? Precio:</dt>
                                         <dd class="col-sm-8">$${formatNumber(data.price, 4)}</dd>
 
-                                        <dt class="col-sm-4">💵 Valor Total:</dt>
+                                        <dt class="col-sm-4">?? Valor Total:</dt>
                                         <dd class="col-sm-8"><strong>$${formatNumber(data.totalValue, 2)}</strong></dd>
 
-                                        <dt class="col-sm-4">🏷️ Tipo:</dt>
+                                        <dt class="col-sm-4">??? Tipo:</dt>
                                         <dd class="col-sm-8">${getTypeText(data.type)}</dd>
 
-                                        <dt class="col-sm-4">📅 Creado:</dt>
+                                        <dt class="col-sm-4">?? Creado:</dt>
                                         <dd class="col-sm-8">${formatDateTime(data.createdAt)}</dd>
 
-                                        <dt class="col-sm-4">🔄 Actualizado:</dt>
+                                        <dt class="col-sm-4">?? Actualizado:</dt>
                                         <dd class="col-sm-8">${formatDateTime(data.updatedAt)}</dd>
                                     </dl>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-primary" onclick="editMovement(${data.id})">
-                                        ✏️ Editar
+                                        ?? Editar
                                     </button>
                                     <button type="button" class="btn btn-danger" onclick="deleteMovement(${data.id}); $('#detailsModal').modal('hide');">
-                                        🗑️ Eliminar
+                                        ??? Eliminar
                                     </button>
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                                 </div>
@@ -593,13 +624,13 @@
             }
 
             function showError(message) {
-                $('#error-message').text('❌ ' + message).removeClass('d-none');
+                $('#error-message').text('? ' + message).removeClass('d-none');
                 $('#data-container').addClass('d-none');
                 $('#summary-cards').hide();
             }
 
             function showAlert(type, message) {
-                const alertEmoji = type === 'success' ? '✅' : '❌';
+                const alertEmoji = type === 'success' ? '?' : '?';
                 const alertHtml = `
                     <div class="alert alert-${type} alert-dismissible fade show" role="alert">
                         ${alertEmoji} ${message}
@@ -609,7 +640,7 @@
 
                 $('#error-message').after(alertHtml);
 
-                // Auto-dismiss después de 3 segundos
+                // Auto-dismiss despu�s de 3 segundos
                 setTimeout(function() {
                     $('.alert').alert('close');
                 }, 3000);
@@ -618,26 +649,26 @@
             function getTypeBadge(type) {
                 switch(type) {
                     case 'STOCK':
-                        return '<span class="badge bg-primary">📈 Acción</span>';
+                        return '<span class="badge badge-primary">Acci�n</span>';
                     case 'CRYPTO':
-                        return '<span class="badge bg-warning">₿ Crypto</span>';
+                        return '<span class="badge badge-warning">Crypto</span>';
                     case 'BOND':
-                        return '<span class="badge bg-info">📋 Bono</span>';
+                        return '<span class="badge badge-info">Bono</span>';
                     default:
-                        return '<span class="badge bg-secondary">❓ Otro</span>';
+                        return '<span class="badge badge-secondary">Otro</span>';
                 }
             }
 
             function getTypeText(type) {
                 switch(type) {
                     case 'STOCK':
-                        return '📈 Acción';
+                        return 'Acci�n';
                     case 'CRYPTO':
-                        return '₿ Criptomoneda';
+                        return 'Criptomoneda';
                     case 'BOND':
-                        return '📋 Bono';
+                        return 'Bono';
                     default:
-                        return '❓ Otro';
+                        return 'Otro';
                 }
             }
 
@@ -661,15 +692,15 @@
 
             function exportToExcel() {
                 if (currentData.length === 0) {
-                    alert('📭 No hay datos para exportar');
+                    alert('?? No hay datos para exportar');
                     return;
                 }
 
-                let csv = 'Ticker,Operación,Fecha,Cantidad,Precio,Valor Total,Tipo,Creado\n';
+                let csv = 'Ticker,Operaci�n,Fecha,Cantidad,Precio,Valor Total,Tipo,Creado\n';
 
                 currentData.forEach(function(item) {
                     const operationText = item.operation === 0 ? 'Compra' : 'Venta';
-                    const typeText = getTypeText(item.type).replace(/[📈₿📋❓]/g, '').trim();
+                    const typeText = getTypeText(item.type).replace(/[??????]/g, '').trim();
 
                     csv += `"${item.ticker}","${operationText}","${formatDate(item.date)}",${item.quantity},${item.price},${item.totalValue},"${typeText}","${formatDateTime(item.createdAt)}"\n`;
                 });
@@ -692,171 +723,374 @@
 }
 
 @section Styles {
-    <style>
-        .table th[data-sort] {
-            cursor: pointer;
-            user-select: none;
+<style>
+    /* Page Header */
+    .page-header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .page-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 0.25rem;
+    }
+
+        /* Filter Card */
+        .filter-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e3e8ef;
         }
 
-            .table th[data-sort]:hover {
-                background-color: rgba(0,0,0,0.1);
-            }
-
-        .table th .sort-icon {
-            font-size: 0.8em;
-            opacity: 0.6;
-            transition: opacity 0.2s ease;
+        .filter-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #e3e8ef;
+            background-color: #f8f9fa;
+            border-radius: 8px 8px 0 0;
         }
 
-        .table th[data-sort]:hover .sort-icon {
-            opacity: 1;
+        .filter-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1f36;
         }
 
-        .table th.sort-asc .sort-icon::after {
-            content: ' ⬆️';
+        .filter-card-body {
+            padding: 1.25rem;
         }
 
-        .table th.sort-desc .sort-icon::after {
-            content: ' ⬇️';
-        }
-
-        .btn-icon {
-            min-width: 32px;
-            padding: 0.25rem 0.5rem;
-        }
-
-        .badge {
-            font-size: 0.8em;
-        }
-
-        .card {
-            transition: all 0.3s ease;
-        }
-
-            .card:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            }
-
-        #summary-cards .card {
-            border: none;
-            border-radius: 10px;
-        }
-
-        #summary-cards .card-body {
-            padding: 1.5rem;
-        }
-
-        #summary-cards h4 {
-            font-size: 1.8rem;
-            font-weight: bold;
-            margin: 0;
-        }
-
-        #summary-cards h6 {
-            font-size: 0.9rem;
-            opacity: 0.9;
+        .filter-card .form-label {
+            font-size: 0.813rem;
+            font-weight: 600;
+            color: #6c757d;
             margin-bottom: 0.5rem;
         }
 
-        .pagination-sm .page-link {
-            padding: 0.25rem 0.5rem;
+        .filter-card .form-control,
+        .filter-card .form-select {
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
         }
 
-        #movements-table {
-            font-size: 0.9rem;
+        .filter-card .form-control:focus,
+        .filter-card .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .select2-container {
-            width: 100% !important;
+        /* Data Card */
+        .data-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e3e8ef;
         }
 
-        .text-success {
-            color: #28a745 !important;
+        .data-card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #e3e8ef;
+            background-color: #f8f9fa;
+            border-radius: 8px 8px 0 0;
         }
 
-        .text-danger {
-            color: #dc3545 !important;
+        .data-card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1f36;
+            display: flex;
+            align-items: center;
         }
 
-        /* Responsive adjustments */
-        @@media (max-width: 768px) {
-            #summary-cards .col-md-3 {
-                margin-bottom: 1rem;
-            }
-
-            .table-responsive {
-                font-size: 0.8rem;
-            }
-
-            .btn-group-sm .btn {
-                padding: 0.125rem 0.25rem;
-                font-size: 0.7rem;
-            }
+        .records-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem 0.75rem;
+            background-color: #e3e8ef;
+            color: #1a1f36;
+            border-radius: 12px;
+            font-size: 0.813rem;
+            font-weight: 600;
+            margin-left: 0.75rem;
         }
 
-        /* Loading animation */
+        .data-card-body {
+            padding: 0;
+        }
+
+        .data-card-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid #e3e8ef;
+            background-color: #f8f9fa;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .pagination-info {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        /* Modern Table */
+        .modern-table {
+            width: 100%;
+            margin-bottom: 0;
+            font-size: 0.875rem;
+        }
+
+        .modern-table thead th {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            border-bottom: 2px solid #e3e8ef;
+            white-space: nowrap;
+        }
+
+        .modern-table thead th[data-sort] {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .modern-table thead th[data-sort]:hover {
+            background-color: #e9ecef;
+        }
+
+        .modern-table thead th .sort-icon {
+            font-size: 0.75rem;
+            opacity: 0.4;
+            margin-left: 0.25rem;
+        }
+
+        .modern-table thead th[data-sort]:hover .sort-icon {
+            opacity: 0.7;
+        }
+
+        .modern-table thead th.sort-asc .sort-icon::before {
+            content: '\f0de';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            opacity: 1;
+        }
+
+        .modern-table thead th.sort-desc .sort-icon::before {
+            content: '\f0dd';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            opacity: 1;
+        }
+
+        .modern-table tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+        }
+
+        .modern-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .modern-table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            color: #1a1f36;
+        }
+
+        /* Custom Badges */
+        .badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 4px;
+            text-transform: capitalize;
+        }
+
+        .badge-success {
+            background-color: #d1f4e0;
+            color: #00875a;
+        }
+
+        .badge-danger {
+            background-color: #ffe5e5;
+            color: #de350b;
+        }
+
+        .badge-primary {
+            background-color: #deebff;
+            color: #0052cc;
+        }
+
+        .badge-warning {
+            background-color: #fff4e5;
+            color: #ff8b00;
+        }
+
+        .badge-info {
+            background-color: #e0f7fa;
+            color: #00897b;
+        }
+
+        .badge-secondary {
+            background-color: #f0f0f0;
+            color: #6c757d;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            background-color: transparent;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-action-primary {
+            color: #0052cc;
+        }
+
+        .btn-action-primary:hover {
+            background-color: #deebff;
+        }
+
+        .btn-action-info {
+            color: #00897b;
+        }
+
+        .btn-action-info:hover {
+            background-color: #e0f7fa;
+        }
+
+        .btn-action-danger {
+            color: #de350b;
+        }
+
+        .btn-action-danger:hover {
+            background-color: #ffe5e5;
+        }
+
+        /* Pagination */
+        .pagination-modern {
+            gap: 0.25rem;
+        }
+
+        .pagination-modern .page-item .page-link {
+            border: 1px solid #e3e8ef;
+            color: #6c757d;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .pagination-modern .page-item .page-link:hover {
+            background-color: #f8f9fa;
+            border-color: #d1d5db;
+        }
+
+        .pagination-modern .page-item.active .page-link {
+            background-color: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .pagination-modern .page-item.disabled .page-link {
+            background-color: #f8f9fa;
+            border-color: #e3e8ef;
+            color: #d1d5db;
+        }
+
+        /* Loading */
         .spinner-border {
             width: 3rem;
             height: 3rem;
         }
 
-        /* Modal improvements */
-        .modal-content {
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
-        }
-
-        .modal-header {
-            border-bottom: 1px solid #dee2e6;
-            background-color: #f8f9fa;
-            border-radius: 10px 10px 0 0;
-        }
-
-        .modal-body dl {
-            margin-bottom: 0;
-        }
-
-        .modal-body dt {
-            font-weight: 600;
-            color: #6c757d;
-        }
-
-        .modal-body dd {
-            margin-bottom: 0.5rem;
-        }
-
-        /* Alert improvements */
-        .alert {
-            border-radius: 10px;
-            border: none;
-        }
-
-        /* Card hover effects */
-        .card-header {
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        /* Filter form improvements */
-        #filter-form .form-label {
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.9rem;
-        }
-
-        #filter-form .form-control,
-        #filter-form .form-select {
-            border-radius: 6px;
-            border: 1px solid #ced4da;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-        }
-
-            #filter-form .form-control:focus,
-            #filter-form .form-select:focus {
-                border-color: #80bdff;
-                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .page-header-content {
+                flex-direction: column;
+                align-items: stretch;
             }
+
+            .page-header-left {
+                margin-bottom: 1rem;
+            }
+
+            .page-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .page-actions .btn {
+                width: 100%;
+            }
+
+            .modern-table {
+                font-size: 0.75rem;
+            }
+
+            .modern-table thead th,
+            .modern-table tbody td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .btn-action {
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        /* Select2 customization */
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container--default .select2-selection--single {
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            height: 38px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 36px;
+            padding-left: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
     </style>
 }

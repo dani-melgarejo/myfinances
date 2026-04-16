@@ -1,10 +1,10 @@
-﻿<!-- Views/Shared/_Layout.cshtml -->
+<!-- Views/Shared/_Layout.cshtml -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Binit Portfolio</title>
+    <title>@ViewData["Title"] - ZZ Portfolio Manager</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -23,202 +23,235 @@
 <body>
     @if (User.Identity.IsAuthenticated)
     {
-        <!-- Navigation -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-            <div class="container-fluid">
-                <!-- Brand -->
-                <a class="navbar-brand fw-bold text-primary" asp-controller="Home" asp-action="Index">
-                    <i class="fas fa-chart-line me-2"></i>Binit Portfolio
-                </a>
+        <div class="app-container">
+            <!-- Sidebar Menu -->
+            <aside class="sidebar-menu" id="sidebarMenu">
+                <div class="sidebar-header">
+                    <div class="sidebar-brand">
+                        <i class="fas fa-chart-line"></i>
+                        <span class="brand-text">ZZ Portfolio Manager</span>
+                    </div>
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
 
-                <!-- Toggle button for mobile -->
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                <div class="sidebar-content">
+                    <!-- MENU Section -->
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-label">MENU</div>
+                        <ul class="sidebar-nav">
+                            <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")">
+                                <a asp-controller="Home" asp-action="Index" class="sidebar-nav-link">
+                                    <i class="fas fa-home"></i>
+                                    <span class="nav-text">Dashboard</span>
+                                    <span class="badge-count">01</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
 
-                <!-- Navigation items -->
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <!-- Left side navigation -->
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")"
-                               asp-controller="Home" asp-action="Index">
-                                <i class="fas fa-home me-1"></i>Home
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Stocks" ? "active" : "")"
-                               asp-controller="Stocks" asp-action="CreateOrEdit">
-                                <i class="fas fa-plus-circle me-1"></i>Operaciones
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Asset" ? "active" : "")"
-                               asp-controller="Asset" asp-action="Index">
-                                <i class="fas fa-coins me-1"></i>Assets
-                            </a>
-                        </li>
-                    </ul>
+                    <!-- CUSTOM Section -->
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-label">CUSTOM</div>
+                        <ul class="sidebar-nav">
+                            <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Stocks" && ViewContext.RouteData.Values["Action"]?.ToString() == "CreateOrEdit" ? "active" : "")">
+                                <a asp-controller="Stocks" asp-action="CreateOrEdit" class="sidebar-nav-link">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span class="nav-text">Nueva Operaci�n</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Stocks" && ViewContext.RouteData.Values["Action"]?.ToString() != "CreateOrEdit" ? "active" : "")">
+                                <a asp-controller="Stocks" asp-action="Index" class="sidebar-nav-link">
+                                    <i class="fas fa-list"></i>
+                                    <span class="nav-text">Ver Movimientos</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Historic" ? "active" : "")">
+                                <a asp-controller="Historic" asp-action="Index" class="sidebar-nav-link">
+                                    <i class="fas fa-history"></i>
+                                    <span class="nav-text">Ver Hist�rico</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Asset" ? "active" : "")">
+                                <a asp-controller="Asset" asp-action="Index" class="sidebar-nav-link">
+                                    <i class="fas fa-coins"></i>
+                                    <span class="nav-text">Gestionar Activos</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
 
-                    <!-- Right side navigation with select -->
-                    <ul class="navbar-nav">
-                        <!-- Navigation Select Dropdown -->
-                        <li class="nav-item dropdown me-3">
-                            <div class="nav-link p-0">
-                                <select id="nav-select" class="form-select form-select-sm" style="min-width: 200px;">
-                                    <option value="">📊 Ir a sección...</option>
-                                    <optgroup label="📈 Reportes">
-                                        <option value="/Historic" data-icon="fas fa-history">Histórico</option>
-                                        <option value="/Portfolio/Report" data-icon="fas fa-chart-pie">Reporte Portafolio</option>
-                                        <option value="/Portfolio/ChartReport" data-icon="fas fa-chart-line">Gráficos Portafolio</option>
-                                        <option value="/MarketData" data-icon="fas fa-chart-line">Market Data</option>
-                                        <option value="/StockQuote" data-icon="fas fa-search">Cotizaciones Yahoo</option>
-                                    </optgroup>
-                                    <optgroup label="⚙️ Gestión">
-                                        <option value="/Stocks/CreateOrEdit" data-icon="fas fa-plus">Nueva Operación</option>
-                                        <option value="/Asset" data-icon="fas fa-coins">Gestionar Assets</option>
-                                    </optgroup>
-                                    <optgroup label="🔧 Herramientas">
-                                        <option value="/Historic" data-icon="fas fa-download" data-action="complete">Completar Histórico</option>
-                                        <option value="/Possession/UpdateAll" data-icon="fas fa-sync" data-action="update">Actualizar Posesiones</option>
-                                    </optgroup>
-                                </select>
+                    <!-- REPORTS Section -->
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-label">REPORTES</div>
+                        <ul class="sidebar-nav">
+                            <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Portfolio" && ViewContext.RouteData.Values["Action"]?.ToString() == "Report" ? "active" : "")">
+                                <a asp-controller="Portfolio" asp-action="Report" class="sidebar-nav-link">
+                                    <i class="fas fa-chart-pie"></i>
+                                    <span class="nav-text">Reporte Portafolio</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Portfolio" && ViewContext.RouteData.Values["Action"]?.ToString() == "ChartReport" ? "active" : "")">
+                                <a asp-controller="Portfolio" asp-action="ChartReport" class="sidebar-nav-link">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span class="nav-text">Gr�ficos Portafolio</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "MarketData" ? "active" : "")">
+                                <a asp-controller="MarketData" asp-action="Index" class="sidebar-nav-link">
+                                    <i class="fas fa-chart-area"></i>
+                                    <span class="nav-text">Market Data</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "StockQuote" ? "active" : "")">
+                                <a asp-controller="StockQuote" asp-action="Index" class="sidebar-nav-link">
+                                    <i class="fas fa-search-dollar"></i>
+                                    <span class="nav-text">Cotizaciones Yahoo</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- TOOLS Section -->
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-label">HERRAMIENTAS</div>
+                        <ul class="sidebar-nav">
+                            <li class="sidebar-nav-item">
+                                <a href="#" class="sidebar-nav-link" id="menu-complete-historic">
+                                    <i class="fas fa-download"></i>
+                                    <span class="nav-text">Completar Hist�rico</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-nav-item">
+                                <a href="#" class="sidebar-nav-link" id="menu-update-rates">
+                                    <i class="fas fa-exchange-alt"></i>
+                                    <span class="nav-text">Actualizar Cotizaciones</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Possession" ? "active" : "")">
+                                <a href="#" class="sidebar-nav-link" id="menu-update-possessions">
+                                    <i class="fas fa-sync"></i>
+                                    <span class="nav-text">Actualizar Posesiones</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <!-- Top Navbar -->
+                <nav class="top-navbar">
+                    <div class="navbar-left">
+                        <button class="menu-toggle-btn" id="menuToggleBtn">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
+
+                    <div class="navbar-right">
+                        <!-- Full Screen Toggle -->
+                        <button class="nav-icon-btn" id="fullscreenBtn" title="Pantalla completa">
+                            <i class="fas fa-expand"></i>
+                        </button>
+
+                        <!-- Search -->
+                        <button class="nav-icon-btn" title="Buscar">
+                            <i class="fas fa-search"></i>
+                        </button>
+
+                        <!-- Language/Country -->
+                        <button class="nav-icon-btn" title="Idioma">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='24'%3E%3Crect width='32' height='24' fill='%233C3B6E'/%3E%3Cpath d='M0 0h32v2H0zm0 4h32v2H0zm0 4h32v2H0zm0 4h32v2H0zm0 4h32v2H0zm0 4h32v2H0z' fill='%23B22234'/%3E%3Crect width='13' height='14' fill='%233C3B6E'/%3E%3C/svg%3E" alt="US" style="width: 20px; height: 15px;">
+                        </button>
+
+                        <!-- Notifications -->
+                        <div class="nav-icon-btn notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">2</span>
+                        </div>
+
+                        <!-- Dark Mode Toggle -->
+                        <button class="nav-icon-btn" id="darkModeToggle" title="Modo oscuro">
+                            <i class="fas fa-moon"></i>
+                        </button>
+
+                        <!-- User Menu -->
+                        <div class="user-menu-container">
+                            <button class="user-menu-btn" id="userMenuBtn">
+                                <div class="user-avatar">
+                                    <span class="avatar-text">@User.Identity.Name?.Substring(0, 1).ToUpper()</span>
+                                </div>
+                                <span class="user-name">@User.Identity.Name</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+
+                            <div class="user-dropdown" id="userDropdown">
+                                <div class="user-dropdown-header">
+                                    <div class="dropdown-welcome">Welcome !</div>
+                                </div>
+                                <div class="user-dropdown-body">
+                                    <a href="#" class="dropdown-item">
+                                        <i class="fas fa-user"></i>
+                                        <span>My Account</span>
+                                    </a>
+                                    <a href="#" class="dropdown-item">
+                                        <i class="fas fa-cog"></i>
+                                        <span>Settings</span>
+                                    </a>
+                                    <a href="#" class="dropdown-item">
+                                        <i class="fas fa-lock"></i>
+                                        <span>Lock Screen</span>
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <form method="post" asp-controller="Account" asp-action="Logout">
+                                        <button type="submit" class="dropdown-item logout-item">
+                                            <i class="fas fa-sign-out-alt"></i>
+                                            <span>Logout</span>
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-                        </li>
+                        </div>
+                    </div>
+                </nav>
 
-                        <!-- Quick Actions Dropdown -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="quickActionsDropdown" role="button"
-                               data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-bolt"></i> Acciones
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <h6 class="dropdown-header">
-                                        <i class="fas fa-zap"></i> Acciones Rápidas
-                                    </h6>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item" href="#" id="quick-add-operation">
-                                        <i class="fas fa-plus text-primary"></i> Nueva Operación
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="#" id="quick-add-asset">
-                                        <i class="fas fa-coins text-warning"></i> Nuevo Asset
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item" href="#" id="quick-complete-historic">
-                                        <i class="fas fa-download text-info"></i> Completar Histórico
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="#" id="quick-update-exchange-rates">
-                                        <i class="fas fa-exchange-alt text-warning"></i> Actualizar Cotizaciones
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="#" id="quick-update-possessions">
-                                        <i class="fas fa-sync text-success"></i> Actualizar Posesiones
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Portfolio" asp-action="Report">
-                                        <i class="fas fa-chart-pie text-secondary"></i> Ver Reporte
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Portfolio" asp-action="ChartReport">
-                                        <i class="fas fa-chart-line text-primary"></i> Ver Gráficos
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item" asp-controller="StockQuote" asp-action="Index">
-                                        <i class="fas fa-search text-success"></i> Cotizaciones Yahoo
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <!-- Asset Quick Search -->
-                        <li class="nav-item ms-2">
-                            <div class="nav-link p-0">
-                                <select id="asset-quick-search" class="form-select form-select-sm" style="min-width: 150px;">
-                                    <option value="">🔍 Buscar asset...</option>
-                                </select>
-                            </div>
-                        </li>
-                    </ul>
+                <!-- Alert container for notifications -->
+                <div id="alert-container" class="alert-container">
+                    <!-- Las alertas se mostrar�n aqu� din�micamente -->
                 </div>
-            </div>
 
-            <!-- Logout button -->
-            <div class="ms-auto">
-                <form method="post" asp-controller="Account" asp-action="Logout" class="d-inline">
-                    <button type="submit" class="btn btn-outline-danger btn-sm">Cerrar Sesión</button>
-                </form>
-            </div>
-        </nav>
+                <!-- Page Content -->
+                <main class="page-content">
+                    @RenderBody()
+                </main>
 
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="bg-light border-bottom">
-            <div class="container-fluid">
-                <ol class="breadcrumb mb-0 py-2">
-                    <li class="breadcrumb-item">
-                        <a asp-controller="Home" asp-action="Index">
-                            <i class="fas fa-home"></i> Home
-                        </a>
-                    </li>
-                    @if (ViewContext.RouteData.Values["Controller"]?.ToString() != "Home")
-                    {
-                        <li class="breadcrumb-item active">
-                            @ViewContext.RouteData.Values["Controller"]
-                        </li>
-                    }
-                    @if (!string.IsNullOrEmpty(ViewContext.RouteData.Values["Action"]?.ToString()) &&
-                    ViewContext.RouteData.Values["Action"]?.ToString() != "Index")
-                    {
-                        <li class="breadcrumb-item active">
-                            @ViewContext.RouteData.Values["Action"]
-                        </li>
-                    }
-                </ol>
-            </div>
-        </nav>
-    }
-
-    <!-- Alert container for notifications -->
-    <div id="alert-container" class="container-fluid mt-2">
-        <!-- Las alertas se mostrarán aquí dinámicamente -->
-    </div>
-
-    <!-- Main Content -->
-    <main class="container-fluid mt-3">
-        @RenderBody()
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-light border-top mt-5 py-3">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-6">
-                    <small class="text-muted">
-                        © 2024 Binit Portfolio - Sistema de gestión de activos financieros
-                    </small>
-                </div>
-                <div class="col-md-6 text-end">
-                    <small class="text-muted">
-                        <i class="fas fa-clock"></i> Última actualización: <span id="last-update">--</span>
-                    </small>
-                </div>
+                <!-- Footer -->
+                <footer class="app-footer">
+                    <div class="footer-content">
+                        <div class="footer-left">
+                            <small class="text-muted">
+                                � 2024 ZZ Portfolio Manager - Sistema de gesti�n de activos financieros
+                            </small>
+                        </div>
+                        <div class="footer-right">
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> �ltima actualizaci�n: <span id="last-update">--</span>
+                            </small>
+                        </div>
+                    </div>
+                </footer>
             </div>
         </div>
-    </footer>
+    }
+    else
+    {
+        <!-- Not authenticated view -->
+        <main class="container mt-3">
+            @RenderBody()
+        </main>
+    }
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -229,180 +262,67 @@
     <!-- Layout Scripts -->
     <script>
         $(document).ready(function() {
-            // Inicializar Select2 para navegación
-            $('#nav-select').select2({
-                placeholder: '📊 Ir a sección...',
-                allowClear: true,
-                width: '100%'
+            // Sidebar toggle
+            $('#sidebarToggle, #menuToggleBtn').click(function() {
+                $('.sidebar-menu').toggleClass('collapsed');
+                $('.main-content').toggleClass('expanded');
             });
 
-            // Manejar cambio en select de navegación
-            $('#nav-select').on('change', function() {
-                const selectedValue = $(this).val();
-                const selectedOption = $(this).find('option:selected');
-                const action = selectedOption.data('action');
+            // User menu dropdown
+            $('#userMenuBtn').click(function(e) {
+                e.stopPropagation();
+                $('#userDropdown').toggleClass('show');
+            });
 
-                if (selectedValue) {
-                    if (action === 'complete') {
-                        // Acción especial para completar histórico
-                        completeHistoric();
-                    } else if (action === 'update') {
-                        // Acción especial para actualizar posesiones
-                        updatePossessions();
-                    } else {
-                        // Navegación normal
-                        window.location.href = selectedValue;
-                    }
+            $(document).click(function() {
+                $('#userDropdown').removeClass('show');
+            });
 
-                    // Resetear select
-                    $(this).val('').trigger('change');
+            $('#userDropdown').click(function(e) {
+                e.stopPropagation();
+            });
+
+            // Fullscreen toggle
+            $('#fullscreenBtn').click(function() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                    $(this).find('i').removeClass('fa-expand').addClass('fa-compress');
+                } else {
+                    document.exitFullscreen();
+                    $(this).find('i').removeClass('fa-compress').addClass('fa-expand');
                 }
             });
 
-            // Inicializar Select2 para búsqueda rápida de assets
-            $('#asset-quick-search').select2({
-                placeholder: '🔍 Buscar asset...',
-                allowClear: true,
-                minimumInputLength: 1,
-                ajax: {
-                    url: '@Url.Action("Search", "Asset")',
-                    dataType: 'json',
-                    delay: 250,
-                    data: function (params) {
-                        return {
-                            q: params.term
-                        };
-                    },
-                    processResults: function (data) {
-                        return {
-                            results: data.map(item => ({
-                                id: item.id,
-                                text: `${item.text} 📈`
-                            }))
-                        };
-                    },
-                    cache: true
-                }
+            // Dark mode toggle
+            $('#darkModeToggle').click(function() {
+                $('body').toggleClass('dark-mode');
+                const icon = $(this).find('i');
+                icon.toggleClass('fa-moon fa-sun');
             });
 
-            // Manejar selección de asset
-            $('#asset-quick-search').on('select2:select', function(e) {
-                const assetId = e.params.data.id;
-                const assetText = e.params.data.text;
-
-                // Mostrar modal con opciones para el asset seleccionado
-                showAssetOptionsModal(assetId, assetText);
-
-                // Resetear select
-                $(this).val('').trigger('change');
-            });
-
-            // Quick actions
-            $('#quick-add-operation').click(function(e) {
-                e.preventDefault();
-                window.location.href = '@Url.Action("CreateOrEdit", "Stocks")';
-            });
-
-            $('#quick-add-asset').click(function(e) {
-                e.preventDefault();
-                window.location.href = '@Url.Action("Index", "Asset")';
-            });
-
-            $('#quick-complete-historic').click(function(e) {
+            // Menu actions
+            $('#menu-complete-historic').click(function(e) {
                 e.preventDefault();
                 completeHistoric();
             });
 
-            $('#quick-update-exchange-rates').click(function(e) {
+            $('#menu-update-rates').click(function(e) {
                 e.preventDefault();
                 updateExchangeRates();
             });
 
-            $('#quick-update-possessions').click(function(e) {
+            $('#menu-update-possessions').click(function(e) {
                 e.preventDefault();
                 updatePossessions();
             });
 
-            // Actualizar timestamp
+            // Update timestamp
             updateLastUpdateTime();
-            setInterval(updateLastUpdateTime, 60000); // Cada minuto
+            setInterval(updateLastUpdateTime, 60000);
         });
 
-        function showAssetOptionsModal(assetId, assetText) {
-            const modalHtml = `
-                <div class="modal fade" id="assetOptionsModal" tabindex="-1">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">
-                                    <i class="fas fa-coins"></i> Opciones para ${assetText}
-                                </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="d-grid gap-2">
-                                    <button class="btn btn-primary" onclick="goToMarketData(${assetId})">
-                                        <i class="fas fa-chart-line"></i> Ver Market Data
-                                    </button>
-                                    <button class="btn btn-success" onclick="goToOperations(${assetId})">
-                                        <i class="fas fa-plus"></i> Nueva Operación
-                                    </button>
-                                    <button class="btn btn-info" onclick="goToPossessions(${assetId})">
-                                        <i class="fas fa-wallet"></i> Ver Posesiones
-                                    </button>
-                                    <button class="btn btn-warning" onclick="updateAssetHistoric(${assetId})">
-                                        <i class="fas fa-download"></i> Actualizar Histórico
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Remover modal existente si existe
-            $('#assetOptionsModal').remove();
-
-            // Agregar y mostrar nuevo modal
-            $('body').append(modalHtml);
-            $('#assetOptionsModal').modal('show');
-        }
-
-        function goToMarketData(assetId) {
-            window.location.href = `@Url.Action("Index", "MarketData")?assetId=${assetId}`;
-            $('#assetOptionsModal').modal('hide');
-        }
-
-        function goToOperations(assetId) {
-            window.location.href = `@Url.Action("CreateOrEdit", "Stocks")?assetId=${assetId}`;
-            $('#assetOptionsModal').modal('hide');
-        }
-
-        function goToPossessions(assetId) {
-            // Implementar cuando tengas la vista de posesiones
-            alert('Vista de posesiones en desarrollo');
-            $('#assetOptionsModal').modal('hide');
-        }
-
-        function updateAssetHistoric(assetId) {
-            $('#assetOptionsModal').modal('hide');
-            showAlert('info', 'Actualizando histórico del asset...', 'fas fa-spinner fa-spin');
-
-            $.post('@Url.Action("GetPostsAsync", "Historic")', { assetId: assetId })
-                .done(function(response) {
-                    if (response.success) {
-                        showAlert('success', response.message || 'Histórico actualizado correctamente', 'fas fa-check');
-                    } else {
-                        showAlert('danger', response.error || 'Error al actualizar histórico', 'fas fa-exclamation-triangle');
-                    }
-                })
-                .fail(function() {
-                    showAlert('danger', 'Error de conexión al actualizar histórico', 'fas fa-exclamation-triangle');
-                });
-        }
-
         function completeHistoric() {
-            showAlert('info', 'Completando datos históricos...', 'fas fa-spinner fa-spin');
+            showAlert('info', 'Completando datos hist�ricos...', 'fas fa-spinner fa-spin');
 
             $.post('@Url.Action("CompleteAllAssets", "Historic")')
                 .done(function(response) {
@@ -413,7 +333,7 @@
                     }
                 })
                 .fail(function() {
-                    showAlert('danger', 'Error al completar histórico', 'fas fa-exclamation-triangle');
+                    showAlert('danger', 'Error al completar hist�rico', 'fas fa-exclamation-triangle');
                 });
         }
 
@@ -466,7 +386,7 @@
 
             $('#alert-container').append(alertHtml);
 
-            // Auto-dismiss después de 5 segundos (excepto para loading)
+            // Auto-dismiss despu�s de 5 segundos (excepto para loading)
             if (type !== 'info' || !icon.includes('fa-spin')) {
                 setTimeout(function() {
                     $(`#${alertId}`).alert('close');

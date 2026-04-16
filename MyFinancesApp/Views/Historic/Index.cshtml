@@ -1,62 +1,128 @@
-﻿<!-- Views/Historic/Index.cshtml -->
-@{
+﻿@{
     ViewData["Title"] = "Histórico";
 }
 
-<div class="row">
-    <div class="col-12">
-        <h2>
-            <i class="fas fa-history"></i> Datos Históricos y Cotizaciones
-        </h2>
+<div class="dashboard-main-content">
+    <!-- Page Header -->
+    <div class="page-header-container mb-4">
+        <div class="page-header-left">
+            <h1 class="page-title">Datos Históricos</h1>
+            <nav aria-label="breadcrumb" class="page-breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">ZZ Portfolio Manager</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Histórico</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
 
-        <!-- Sección de Datos Históricos de Assets -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-line"></i> Datos Históricos de Assets
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                    Actualiza los datos históricos de todos los activos desde la última fecha disponible.
-                    Este proceso descarga información de precios históricos para completar el histórico de cotizaciones.
-                </p>
-
-                <button id="btn-complete-historic" class="btn btn-primary">
-                    <i class="fas fa-download"></i> Completar Histórico de Assets
-                </button>
-
-                <div id="loading-historic" class="d-none mt-3">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Cargando...</span>
+    <div class="row">
+        <!-- Market Status Card -->
+        <div class="col-12 mb-4">
+            <div class="card market-status-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-2">
+                                <i class="fas fa-clock"></i> Estado del Mercado
+                            </h6>
+                            <div class="market-info">
+                                @{
+                                    var isMarketOpen = ViewBag.IsMarketOpen ?? false;
+                                    var effectiveDate = ViewBag.EffectiveDataDate ?? DateTime.Today;
+                                    var currentTimeUtc = ViewBag.CurrentTimeUtc ?? DateTime.UtcNow;
+                                }
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge @(isMarketOpen ? "bg-success" : "bg-secondary") me-2">
+                                        <i class="fas fa-circle pulse-icon"></i> @(isMarketOpen ? "ABIERTO" : "CERRADO")
+                                    </span>
+                                    <small class="text-muted">
+                                        Hora UTC: @currentTimeUtc.ToString("HH:mm:ss")
+                                    </small>
+                                </div>
+                                <div class="info-row">
+                                    <small>
+                                        <i class="fas fa-calendar-day text-primary"></i>
+                                        <strong>Fecha efectiva para datos:</strong> @effectiveDate.ToString("yyyy-MM-dd")
+                                        <span class="text-muted ms-2">
+                                            @if (isMarketOpen)
+                                            {
+                                                <span>(día hábil anterior - mercado abierto)</span>
+                                            }
+                                            else
+                                            {
+                                                <span>(incluye día actual - mercado cerrado)</span>
+                                            }
+                                        </span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <small class="text-muted d-block mb-1">
+                                <i class="fas fa-business-time"></i> Horario NYSE/NASDAQ (UTC)
+                            </small>
+                            <div class="market-hours">
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-door-open"></i> @ViewBag.MarketOpenTimeUtc
+                                </span>
+                                <span class="mx-1">-</span>
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-door-closed"></i> @ViewBag.MarketCloseTimeUtc
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <span class="ms-2">Procesando datos históricos de assets...</span>
                 </div>
-
-                <div id="message-historic" class="mt-3"></div>
             </div>
         </div>
 
-        <!-- Nueva Sección de Cotizaciones de Monedas -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-exchange-alt"></i> Cotizaciones de Monedas
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                    Actualiza las cotizaciones de todas las monedas disponibles usando ExchangeRate-API.
-                    Las cotizaciones se obtienen en base USD y se actualizan automáticamente como las más recientes.
-                </p>
+        <!-- Sección de Datos Históricos de Assets -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">
+                        <i class="fas fa-chart-line"></i> Datos Históricos de Assets
+                    </h5>
+                    <p class="text-muted mb-4">
+                        Actualiza los datos históricos de todos los activos desde la última fecha disponible.
+                        Este proceso descarga información de precios históricos para completar el histórico de cotizaciones.
+                    </p>
 
-                <div class="row">
-                    <div class="col-md-8">
-                        <button id="btn-update-exchange-rates" class="btn btn-success me-2">
+                    <button id="btn-complete-historic" class="btn btn-primary">
+                        <i class="fas fa-download"></i> Completar Histórico de Assets
+                    </button>
+
+                    <div id="loading-historic" class="d-none mt-3">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <span>Procesando datos históricos de assets...</span>
+                    </div>
+
+                    <div id="message-historic" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de Cotizaciones de Monedas -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">
+                        <i class="fas fa-exchange-alt"></i> Cotizaciones de Monedas
+                    </h5>
+                    <p class="text-muted mb-4">
+                        Actualiza las cotizaciones de todas las monedas disponibles usando ExchangeRate-API.
+                        Las cotizaciones se obtienen en base USD y se actualizan automáticamente.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button id="btn-update-exchange-rates" class="btn btn-success">
                             <i class="fas fa-sync"></i> Actualizar Cotizaciones
                         </button>
 
-                        <button id="btn-exchange-rate-status" class="btn btn-info me-2">
+                        <button id="btn-exchange-rate-status" class="btn btn-info">
                             <i class="fas fa-info-circle"></i> Ver Estado
                         </button>
 
@@ -65,68 +131,39 @@
                                 <i class="fas fa-cog"></i> Opciones
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" id="btn-update-major">Actualizar Principales (USD, EUR, GBP, JPY)</a></li>
-                                <li><a class="dropdown-item" href="#" id="btn-update-latam">Actualizar Latinoamérica (ARS, BRL, MXN, CLP)</a></li>
+                                <li><a class="dropdown-item" href="#" id="btn-update-major">
+                                    <i class="fas fa-star text-warning"></i> Actualizar Principales
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" id="btn-update-latam">
+                                    <i class="fas fa-globe-americas text-success"></i> Actualizar Latinoamérica
+                                </a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" id="btn-update-possessions-currency">Actualizar Monedas de Posesiones</a></li>
+                                <li><a class="dropdown-item" href="#" id="btn-update-possessions-currency">
+                                    <i class="fas fa-coins text-primary"></i> Actualizar Monedas de Posesiones
+                                </a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" id="btn-view-all-rates">Ver Todas las Cotizaciones</a></li>
+                                <li><a class="dropdown-item" href="#" id="btn-view-all-rates">
+                                    <i class="fas fa-list text-info"></i> Ver Todas las Cotizaciones
+                                </a></li>
                             </ul>
                         </div>
                     </div>
-                    <div class="col-md-4 text-end">
+
+                    <div class="info-box">
                         <small class="text-muted">
                             <i class="fas fa-clock"></i> Fuente: ExchangeRate-API<br>
                             <i class="fas fa-globe"></i> Base: USD
                         </small>
                     </div>
-                </div>
 
-                <div id="loading-exchange" class="d-none mt-3">
-                    <div class="spinner-border text-success" role="status">
-                        <span class="visually-hidden">Cargando...</span>
+                    <div id="loading-exchange" class="d-none mt-3">
+                        <div class="spinner-border spinner-border-sm text-success me-2" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <span>Actualizando cotizaciones de monedas...</span>
                     </div>
-                    <span class="ms-2">Actualizando cotizaciones de monedas...</span>
-                </div>
 
-                <div id="message-exchange" class="mt-3"></div>
-            </div>
-        </div>
-
-        <!-- Información de Estado -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-info"></i> Información del Sistema
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>💹 Assets Históricos:</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-check text-success"></i> Descarga automática de Yahoo Finance</li>
-                            <li><i class="fas fa-check text-success"></i> Actualización incremental</li>
-                            <li><i class="fas fa-check text-success"></i> Validación de datos duplicados</li>
-                            <li><i class="fas fa-check text-success"></i> Actualización automática de monedas en posesiones</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>💱 Cotizaciones de Monedas:</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-check text-success"></i> API confiable (ExchangeRate-API)</li>
-                            <li><i class="fas fa-check text-success"></i> Más de 160 monedas soportadas</li>
-                            <li><i class="fas fa-check text-success"></i> Actualización en tiempo real</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="alert alert-info mt-3">
-                    <h6><i class="fas fa-lightbulb"></i> Recomendación:</h6>
-                    <p class="mb-0">
-                        Ejecuta "Completar Histórico de Assets" primero para obtener los datos de precios históricos,
-                        luego "Actualizar Cotizaciones" para mantener las conversiones de moneda al día.
-                    </p>
+                    <div id="message-exchange" class="mt-3"></div>
                 </div>
             </div>
         </div>
@@ -194,7 +231,20 @@
                     btnCompleteHistoric.disabled = false;
 
                     if (data.message) {
-                        showAlert("message-historic", "success", data.message);
+                        let details = "";
+                        if (data.marketStatus) {
+                            const status = data.marketStatus.isOpen ? 
+                                `<span class="badge bg-success"><i class="fas fa-circle"></i> ABIERTO</span>` : 
+                                `<span class="badge bg-secondary"><i class="fas fa-circle"></i> CERRADO</span>`;
+                            
+                            details = `
+                                Estado del mercado: ${status}<br>
+                                Fecha efectiva: ${data.marketStatus.effectiveDate}<br>
+                                Hora UTC: ${data.marketStatus.currentTimeUtc}<br>
+                                Horario mercado: ${data.marketStatus.openTimeUtc} - ${data.marketStatus.closeTimeUtc}
+                            `;
+                        }
+                        showAlert("message-historic", "success", data.message, details);
                     } else if (data.error) {
                         showAlert("message-historic", "danger", `Error: ${data.error}`);
                     }
@@ -361,48 +411,251 @@
 }
 
 @section Styles {
-    <style>
+<style>
+    /* Market Status Card */
+    .market-status-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+    }
+
+        .market-status-card .card-body {
+            padding: 1.25rem 1.5rem;
+        }
+
+        .market-status-card h6 {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .market-status-card .text-muted {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .market-status-card .badge.bg-success {
+            background-color: #00875a !important;
+            animation: pulse-success 2s infinite;
+        }
+
+        .market-status-card .badge.bg-secondary {
+            background-color: #6c757d !important;
+        }
+
+        .market-status-card .badge.bg-light {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .market-status-card .info-row {
+            padding: 0.5rem 0;
+        }
+
+        .market-status-card .text-primary {
+            color: #ffd700 !important;
+        }
+
+    /* Pulse animation for market open status */
+    @@keyframes pulse-success {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.7;
+        }
+    }
+
+    .pulse-icon {
+        animation: pulse-icon 2s infinite;
+    }
+
+    @@keyframes pulse-icon {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+    }
+
+    .market-hours {
+        font-size: 0.875rem;
+    }
+
+    /* Cards */
         .card {
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+            border-radius: 12px;
+            border: 1px solid #e3e8ef;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
         }
 
-        .card:hover {
-            transform: translateY(-2px);
+        .card-body {
+            padding: 1.5rem;
         }
 
-        .card-header {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-bottom: 1px solid #dee2e6;
-        }
-
+        /* Buttons */
         .btn {
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-1px);
-        }
-
-        .alert {
             border-radius: 8px;
+            padding: 0.625rem 1.25rem;
+            font-weight: 600;
+            font-size: 0.938rem;
+            transition: all 0.2s ease;
             border: none;
         }
 
-        .spinner-border-sm {
-            width: 1rem;
-            height: 1rem;
+            .btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
         }
 
+            .btn-primary:hover {
+                background: linear-gradient(135deg, #5568d3 0%, #65408a 100%);
+            }
+
+        .btn-success {
+            background-color: #00875a;
+            color: white;
+        }
+
+            .btn-success:hover {
+                background-color: #006644;
+            }
+
+        .btn-info {
+            background-color: #00897b;
+            color: white;
+        }
+
+            .btn-info:hover {
+                background-color: #006b5f;
+            }
+
+        .btn-outline-secondary {
+            border: 1px solid #e3e8ef;
+            color: #6c757d;
+            background-color: white;
+        }
+
+            .btn-outline-secondary:hover {
+                background-color: #f8f9fa;
+                border-color: #d1d5db;
+            }
+
+        /* Alerts */
+        .alert {
+            border-radius: 8px;
+            border: none;
+            padding: 1rem 1.25rem;
+        }
+
+        .alert-success {
+            background-color: #d1f4e0;
+            color: #00875a;
+            border-left: 4px solid #00875a;
+        }
+
+        .alert-danger {
+            background-color: #ffe5e5;
+            color: #de350b;
+            border-left: 4px solid #de350b;
+        }
+
+        .alert-info {
+            background-color: #e0f7fa;
+            color: #00897b;
+            border-left: 4px solid #00897b;
+        }
+
+        .alert-warning {
+            background-color: #fff4e5;
+            color: #ff8b00;
+            border-left: 4px solid #ff8b00;
+        }
+
+        /* Spinner */
+        .spinner-border-sm {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-width: 0.2rem;
+        }
+
+        /* Dropdown */
         .dropdown-menu {
             border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 1px solid #e3e8ef;
         }
 
-        .list-unstyled li {
-            margin-bottom: 0.25rem;
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            transition: background-color 0.2s ease;
+        }
+
+            .dropdown-item:hover {
+                background-color: #f8f9fa;
+            }
+
+            .dropdown-item i {
+                margin-right: 0.5rem;
+            }
+
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            border-top: 1px solid #e3e8ef;
+        }
+
+        /* Info Box */
+        .info-box {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 0.75rem;
+            border-left: 3px solid #667eea;
+        }
+
+        /* Text Utilities */
+        .text-muted {
+            color: #6c757d !important;
+        }
+
+        /* Gap Utility */
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        /* Height Utility */
+        .h-100 {
+            height: 100%;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .card-body {
+                padding: 1rem;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            .btn-group {
+                width: 100%;
+            }
+
+                .btn-group .btn {
+                    width: 100%;
+                }
+
+            .d-flex.flex-wrap {
+                flex-direction: column;
+            }
         }
     </style>
 }

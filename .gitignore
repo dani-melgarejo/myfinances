@@ -10,3 +10,7 @@
 /MyFinancesApp/bin/Debug/net8.0
 /MyFinancesApp/obj
 /obj
+/MyFinancesApp/bin/Release/net8.0
+/MyFinances.Domain/bin/Release/net8.0
+/MyFinances.Logic/bin/Release/net8.0
+/MyFinancesApp/Properties/PublishProfiles

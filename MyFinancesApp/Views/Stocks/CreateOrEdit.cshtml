@@ -6,264 +6,193 @@
     var isEdit = Model.Id > 0;
 }
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    @if (isEdit)
-                    {
-                        <span>✏️ Editar Operación - @Model.Ticker</span>
-                    }
-                    else
-                    {
-                        <span>➕ Registrar Nueva Operación</span>
-                    }
-                </h5>
+<div class="dashboard-main-content">
+    <!-- Page Header -->
+    <div class="page-header-container mb-4">
+        <div class="page-header-content">
+            <div class="page-header-left">
+                <h1 class="page-title">@(isEdit ? "Editar Operación" : "Nueva Operación")</h1>
+                <nav aria-label="breadcrumb" class="page-breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">ZZ Portfolio Manager</a></li>
+                        <li class="breadcrumb-item"><a href="@Url.Action("Index", "Stocks")">Operaciones</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">@(isEdit ? "Editar" : "Nueva")</li>
+                    </ol>
+                </nav>
             </div>
-            <div class="card-body">
-                <form asp-action="@(isEdit ? "Edit" : "CreateOrEdit")" method="post" id="stock-form">
-                    @if (isEdit)
-                    {
-                        <input asp-for="Id" type="hidden" />
-                    }
+            <div class="page-actions">
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label asp-for="AssetId" class="form-label">Asset</label>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="@(isEdit ? "Edit" : "CreateOrEdit")" method="post" id="stock-form">
+                        @if (isEdit)
+                        {
+                            <input asp-for="Id" type="hidden" />
+                        }
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="AssetId" class="form-label">Asset</label>
+                                    @if (isEdit)
+                                    {
+                                        <input type="hidden" asp-for="AssetId" />
+                                        <input type="text" class="form-control" value="@Model.Ticker" readonly />
+                                        <small class="form-text text-muted">El asset no se puede cambiar al editar</small>
+                                    }
+                                    else
+                                    {
+                                        <select asp-for="AssetId" class="form-control select2" id="asset-select" required>
+                                            <option value="">Seleccionar Asset...</option>
+                                        </select>
+                                    }
+                                    <span asp-validation-for="AssetId" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Operation" class="form-label">Operación</label>
+                                    <select asp-for="Operation" class="form-control" required>
+                                        <option value="">Seleccionar...</option>
+                                        <option value="0" selected="@(Model.Operation == 0)">🛒 Compra</option>
+                                        <option value="1" selected="@(Model.Operation == 1)">💸 Venta</option>
+                                    </select>
+                                    <span asp-validation-for="Operation" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="Date" class="form-label">Fecha</label>
+                                    <input asp-for="Date" type="date" class="form-control"
+                                           value="@(Model.Date != default(DateTime) ? Model.Date.ToString("yyyy-MM-dd") : DateTime.Now.ToString("yyyy-MM-dd"))"
+                                           required />
+                                    <span asp-validation-for="Date" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="Quantity" class="form-label">Cantidad</label>
+                                    <div class="input-group">
+                                        <input asp-for="Quantity" type="number" step="0.00000001" class="form-control" required />
+                                        <span class="input-group-text">📦</span>
+                                    </div>
+                                    <span asp-validation-for="Quantity" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="Price" class="form-label">Precio</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input asp-for="Price" type="number" step="0.0001" class="form-control" required />
+                                    </div>
+                                    <span asp-validation-for="Price" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Type" class="form-label">Tipo</label>
+                                    @if (isEdit)
+                                    {
+                                        <select asp-for="Type" class="form-control" required>
+                                            <option value="0" selected="@(Model.Type == 0)">📈 Acción</option>
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <input type="hidden" asp-for="Type" value="0" />
+                                        <input type="text" class="form-control" value="📈 Acción" readonly />
+                                    }
+                                    <span asp-validation-for="Type" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CurrencyId" class="form-label">Moneda</label>
+                                    <select asp-for="CurrencyId" class="form-control select2" id="currency-select">
+                                        <option value="">USD (Por defecto)</option>
+                                    </select>
+                                    <small class="form-text text-muted">Si no selecciona ninguna, se utilizará USD por defecto</small>
+                                    <span asp-validation-for="CurrencyId" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">Valor Total (Calculado)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text" id="currency-symbol">$</span>
+                                        <input id="total-value" type="text" class="form-control bg-light" readonly />
+                                    </div>
+                                    <small class="form-text text-muted">Se calcula automáticamente: Cantidad × Precio</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información adicional para edición -->
+
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary">
                                 @if (isEdit)
                                 {
-                                    <input type="hidden" asp-for="AssetId" />
-                                    <input type="text" class="form-control" value="@Model.Ticker" readonly />
-                                    <small class="form-text text-muted">El asset no se puede cambiar al editar</small>
+                                    <span>Actualizar Operación</span>
                                 }
                                 else
                                 {
-                                    <select asp-for="AssetId" class="form-control select2" id="asset-select" required>
-                                        <option value="">Seleccionar Asset...</option>
-                                    </select>
+                                    <span>Guardar Operación</span>
                                 }
-                                <span asp-validation-for="AssetId" class="text-danger"></span>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label asp-for="Operation" class="form-label">Operación</label>
-                                <select asp-for="Operation" class="form-control" required>
-                                    <option value="">Seleccionar...</option>
-                                    <option value="0" selected="@(Model.Operation == 0)">🛒 Compra</option>
-                                    <option value="1" selected="@(Model.Operation == 1)">💸 Venta</option>
-                                </select>
-                                <span asp-validation-for="Operation" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label asp-for="Date" class="form-label">Fecha</label>
-                                <input asp-for="Date" type="date" class="form-control" required />
-                                <span asp-validation-for="Date" class="text-danger"></span>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label asp-for="Quantity" class="form-label">Cantidad</label>
-                                <div class="input-group">
-                                    <input asp-for="Quantity" type="number" step="0.00000001" class="form-control" required />
-                                    <span class="input-group-text">📦</span>
-                                </div>
-                                <span asp-validation-for="Quantity" class="text-danger"></span>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label asp-for="Price" class="form-label">Precio</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input asp-for="Price" type="number" step="0.0001" class="form-control" required />
-                                </div>
-                                <span asp-validation-for="Price" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label asp-for="Type" class="form-label">Tipo</label>
-                                <select asp-for="Type" class="form-control" required>
-                                    <option value="">Seleccionar...</option>
-                                    <option value="0" selected="@(Model.Type == 0)">📈 Acción</option>
-                                </select>
-                                <span asp-validation-for="Type" class="text-danger"></span>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label asp-for="CurrencyId" class="form-label">Moneda</label>
-                                <select asp-for="CurrencyId" class="form-control select2" id="currency-select">
-                                    <option value="">USD (Por defecto)</option>
-                                </select>
-                                <small class="form-text text-muted">Si no selecciona ninguna, se utilizará USD por defecto</small>
-                                <span asp-validation-for="CurrencyId" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="mb-3">
-                                <label class="form-label">Valor Total (Calculado)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text" id="currency-symbol">$</span>
-                                    <input id="total-value" type="text" class="form-control bg-light" readonly />
-                                </div>
-                                <small class="form-text text-muted">Se calcula automáticamente: Cantidad × Precio</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Información adicional para edición -->
-
-                    <div class="mb-3">
-                        <button type="submit" class="btn btn-primary">
-                            @if (isEdit)
-                            {
-                                <span>💾 Actualizar Operación</span>
-                            }
-                            else
-                            {
-                                <span>💾 Guardar Operación</span>
-                            }
-                        </button>
-
-                        @if (isEdit)
-                        {
-                            <a asp-action="Index" class="btn btn-secondary">
-                                ⬅️ Volver al Listado
-                            </a>
-                            <button type="button" class="btn btn-danger" id="btn-delete">
-                                🗑️ Eliminar
                             </button>
-                        }
-                        else
-                        {
-                            <a asp-action="Index" class="btn btn-secondary">
-                                ⬅️ Volver al Listado
-                            </a>
-                            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
-                                🏠 Ir al Home
-                            </a>
-                        }
-                    </div>
-                </form>
 
-                <!-- Alertas -->
-                @if (TempData["Success"] != null)
-                {
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        ✅ @TempData["Success"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                }
-
-                @if (TempData["Error"] != null)
-                {
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        ❌ @TempData["Error"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-
-    <!-- Panel lateral con información -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0">ℹ️ Información</h6>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <h6>📋 Tipos de Operación:</h6>
-                    <ul class="list-unstyled">
-                        <li><span class="badge bg-success">🛒 Compra</span> - Adquisición de activos</li>
-                        <li><span class="badge bg-danger">💸 Venta</span> - Venta de activos</li>
-                    </ul>
-                </div>
-
-                <div class="mb-3">
-                    <h6>🏷️ Tipos de Activos:</h6>
-                    <ul class="list-unstyled">
-                        <li><span class="badge bg-primary">📈 Acción</span> - Acciones de empresas</li>
-                        <li><span class="badge bg-warning">₿ Crypto</span> - Criptomonedas</li>
-                        <li><span class="badge bg-info">📋 Bono</span> - Bonos y deuda</li>
-                    </ul>
-                </div>
-
-                <div class="mb-3">
-                    <h6>💱 Monedas:</h6>
-                    <ul class="list-unstyled">
-                        <li><span class="badge bg-success">$ USD</span> - Dólar (Por defecto)</li>
-                        <li><span class="badge bg-secondary">€ EUR</span> - Euro</li>
-                        <li><span class="badge bg-info">$ ARS</span> - Peso Argentino</li>
-                        <li><small class="text-muted">Y más...</small></li>
-                    </ul>
-                </div>
-
-                @if (isEdit)
-                {
-                    <div class="alert alert-info">
-                        <small>
-                            <strong>⚠️ Nota:</strong> Al editar una operación, el asset no se puede cambiar.
-                            Si necesitas cambiar el asset, elimina esta operación y crea una nueva.
-                            La moneda sí se puede modificar.
-                        </small>
-                    </div>
-                }
-                else
-                {
-                    <div class="alert alert-success">
-                        <small>
-                            <strong>💡 Consejo:</strong> Puedes buscar assets escribiendo su ticker en el campo Asset.
-                            Si no existe, créalo primero en la sección de Assets. 
-                            <br><strong>💱 Moneda:</strong> Si no seleccionas ninguna moneda, se utilizará USD por defecto.
-                        </small>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Historial reciente (solo para edición) -->
-        @if (isEdit)
-        {
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h6 class="mb-0">📊 Resumen de @Model.Ticker</h6>
-                </div>
-                <div class="card-body">
-                    <div id="asset-summary">
-                        <div class="text-center">
-                            <div class="spinner-border spinner-border-sm" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                            <p class="mt-2">Cargando información...</p>
+                            @if (isEdit)
+                            {                                
+                                <button type="button" class="btn btn-danger" id="btn-delete">
+                                    Eliminar
+                                </button>
+                            }                            
                         </div>
-                    </div>
+                    </form>
+
+                    <!-- Alertas -->
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            ✅ @TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ❌ @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
                 </div>
             </div>
-        }
+        </div>
     </div>
 </div>
-
 @section Scripts {
     <script>
         $(document).ready(function() {
@@ -313,20 +242,15 @@
             // Manejar cambio de moneda
             $('#currency-select').on('change', function() {
                 const selectedData = $(this).select2('data')[0];
-                
+
                 if (selectedData && selectedData.symbol) {
                     $('#currency-symbol').text(selectedData.symbol);
                 } else {
                     $('#currency-symbol').text('$'); // USD por defecto
                 }
-                
+
                 calculateTotalValue();
             });
-
-            // Establecer fecha actual por defecto si no hay valor
-            if (!$('#Date').val()) {
-                $('#Date').val(new Date().toISOString().split('T')[0]);
-            }
 
             // Calcular valor total en tiempo real
             $('#Quantity, #Price').on('input', function() {
@@ -348,18 +272,18 @@
             // Cargar resumen del asset (solo para edición)
             if (isEdit) {
                 loadAssetSummary(@Model.AssetId);
-                
+
                 // Si hay una moneda seleccionada en edición, cargarla
                 @if (Model.CurrencyId.HasValue)
                 {
-                    <text>
-                    // Preseleccionar la moneda en modo edición
-                    setTimeout(function() {
-                        const currencyOption = new Option('@Model.CurrencyCode - @Model.CurrencySymbol', '@Model.CurrencyId', true, true);
-                        $('#currency-select').append(currencyOption).trigger('change');
-                        $('#currency-symbol').text('@Model.CurrencySymbol');
-                    }, 500);
-                    </text>
+                            <text>
+                            // Preseleccionar la moneda en modo edición
+                            setTimeout(function() {
+                                const currencyOption = new Option('@Model.CurrencyCode - @Model.CurrencySymbol', '@Model.CurrencyId', true, true);
+                                $('#currency-select').append(currencyOption).trigger('change');
+                                $('#currency-symbol').text('@Model.CurrencySymbol');
+                            }, 500);
+                            </text>
                 }
             }
 
@@ -494,8 +418,54 @@
 
 @section Styles {
     <style>
+        /* Form Inputs - Modern Style */
+        .form-control,
+        .form-select {
+            border: 1px solid #e3e8ef;
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-size: 0.938rem;
+            transition: all 0.2s ease;
+            background-color: white;
+        }
+
+            .form-control:focus,
+            .form-select:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                outline: none;
+            }
+
+            .form-control[readonly] {
+                background-color: #f8f9fa;
+                border-color: #e3e8ef;
+                color: #6c757d;
+            }
+
+        .form-label {
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-group-text {
+            background-color: #f8f9fa;
+            border: 1px solid #e3e8ef;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+            .input-group .form-control:focus + .input-group-text,
+            .input-group-text + .form-control:focus {
+                border-color: #667eea;
+            }
+
+        /* Cards */
         .card {
-            border-radius: 10px;
+            border-radius: 12px;
+            border: 1px solid #e3e8ef;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
         }
 
@@ -507,70 +477,235 @@
                 border-left: 4px solid #dc3545 !important;
             }
 
-        .form-control.is-invalid {
-            border-color: #dc3545;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        .card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #e3e8ef;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 1.25rem;
         }
 
-        .input-group-text {
-            background-color: #f8f9fa;
-            border-color: #ced4da;
+            .card-header h5,
+            .card-header h6 {
+                font-weight: 600;
+                color: #2c3e50;
+            }
+
+        .card-body {
+            padding: 1.5rem;
         }
 
-        .bg-light {
-            background-color: #f8f9fa !important;
+        /* Validation */
+        .form-control.is-invalid,
+        .form-select.is-invalid {
+            border-color: #de350b;
+            box-shadow: 0 0 0 3px rgba(222, 53, 11, 0.1);
         }
 
-        .badge {
-            font-size: 0.8em;
+        .text-danger {
+            color: #de350b;
+            font-size: 0.813rem;
+            margin-top: 0.25rem;
+            display: block;
         }
 
-        .list-unstyled li {
-            margin-bottom: 0.5rem;
-        }
-
-        .spinner-border-sm {
-            width: 1rem;
-            height: 1rem;
-        }
-
-        .alert {
-            border-radius: 8px;
-            border: none;
-        }
-
+        /* Buttons */
         .btn {
-            border-radius: 6px;
+            border-radius: 8px;
+            padding: 0.625rem 1.25rem;
+            font-weight: 600;
+            font-size: 0.938rem;
             transition: all 0.2s ease;
+            border: none;
         }
 
             .btn:hover {
                 transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             }
 
-        .card-header {
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-            border-radius: 10px 10px 0 0 !important;
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
         }
 
-        .form-label {
+            .btn-primary:hover {
+                background: linear-gradient(135deg, #5568d3 0%, #65408a 100%);
+            }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+            .btn-secondary:hover {
+                background-color: #5a6268;
+            }
+
+        .btn-outline-secondary {
+            border: 1px solid #e3e8ef;
+            color: #6c757d;
+            background-color: white;
+        }
+
+            .btn-outline-secondary:hover {
+                background-color: #f8f9fa;
+                border-color: #d1d5db;
+            }
+
+        .btn-danger {
+            background-color: #de350b;
+            color: white;
+        }
+
+            .btn-danger:hover {
+                background-color: #c92a09;
+            }
+
+        /* Badges */
+        .badge {
+            font-size: 0.813rem;
             font-weight: 600;
-            color: #495057;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
         }
 
-        .text-success {
-            color: #28a745 !important;
+            .badge.bg-success {
+                background-color: #d1f4e0 !important;
+                color: #00875a;
+            }
+
+            .badge.bg-danger {
+                background-color: #ffe5e5 !important;
+                color: #de350b;
+            }
+
+            .badge.bg-primary {
+                background-color: #deebff !important;
+                color: #0052cc;
+            }
+
+            .badge.bg-warning {
+                background-color: #fff4e5 !important;
+                color: #ff8b00;
+            }
+
+            .badge.bg-info {
+                background-color: #e0f7fa !important;
+                color: #00897b;
+            }
+
+            .badge.bg-secondary {
+                background-color: #f0f0f0 !important;
+                color: #6c757d;
+            }
+
+        /* Alerts */
+        .alert {
+            border-radius: 8px;
+            border: none;
+            padding: 1rem 1.25rem;
         }
 
-        .text-danger {
-            color: #dc3545 !important;
+        .alert-success {
+            background-color: #d1f4e0;
+            color: #00875a;
+            border-left: 4px solid #00875a;
+        }
+
+        .alert-danger {
+            background-color: #ffe5e5;
+            color: #de350b;
+            border-left: 4px solid #de350b;
+        }
+
+        .alert-info {
+            background-color: #e0f7fa;
+            color: #00897b;
+            border-left: 4px solid #00897b;
+        }
+
+        /* List Styling */
+        .list-unstyled li {
+            margin-bottom: 0.75rem;
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        /* Loading Spinner */
+        .spinner-border-sm {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-width: 0.2rem;
+        }
+
+        /* Form Helper Text */
+        .form-text {
+            font-size: 0.813rem;
+            color: #8896ab;
+            margin-top: 0.25rem;
+        }
+
+        /* Readonly Background */
+        .bg-light {
+            background-color: #f8f9fa !important;
+        }
+
+        /* Select2 Custom Styling */
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #e3e8ef;
+            border-radius: 6px;
+            height: 46px;
+            padding: 0.5rem;
+        }
+
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                line-height: 30px;
+                color: #2c3e50;
+                padding-left: 0.5rem;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 44px;
+            }
+
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Page Header Content */
+        .page-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
         }
 
         /* Responsive */
         @@media (max-width: 768px) {
             .col-md-4 {
                 margin-top: 1rem;
+            }
+
+            .page-header-content {
+                flex-direction: column;
+            }
+
+            .page-actions {
+                width: 100%;
+            }
+
+                .page-actions .btn {
+                    width: 100%;
+                }
+
+            .card-body {
+                padding: 1rem;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
             }
         }
     </style>

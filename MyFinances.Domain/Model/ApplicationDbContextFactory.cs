@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using Pomelo.EntityFrameworkCore.MySql;
 using System.IO;
 
 namespace MyFinances.Domain.Model;
@@ -18,7 +17,7 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-        optionsBuilder.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 4, 8)));
+        optionsBuilder.UseSqlServer(connectionString);
 
         return new ApplicationDbContext(optionsBuilder.Options);
     }

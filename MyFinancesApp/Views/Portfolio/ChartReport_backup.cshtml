@@ -1,0 +1,673 @@
+﻿@using MyFinances.Logic.Models
+@model PortfolioReportRequestViewModel
+
+@{
+    ViewData["Title"] = "Reporte de Portafolio - Gráficos";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Reporte de Portafolio - Vista Gráfica</h2>
+            <div>
+                <a asp-controller="Portfolio" asp-action="Report" class="btn btn-outline-primary">
+                    <i class="fas fa-table"></i> Ver Tabla
+                </a>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="report-form">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="fechaInicio" class="form-label">Fecha Inicio</label>
+                                <input type="date" class="form-control" id="fechaInicio"
+                                       value="@Model.FechaInicio.ToString("yyyy-MM-dd")" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="fechaFin" class="form-label">Fecha Fin</label>
+                                <input type="date" class="form-control" id="fechaFin"
+                                       value="@Model.FechaFin.ToString("yyyy-MM-dd")" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div>
+                                    <button type="button" id="btn-generate-report" class="btn btn-primary">
+                                        <i class="fas fa-chart-line"></i> Generar Gráficos
+                                    </button>
+                                    <button type="button" id="btn-export" class="btn btn-success" disabled>
+                                        <i class="fas fa-image"></i> Exportar PNG
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="text-center d-none">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Generando gráficos...</p>
+        </div>
+
+        <!-- Resumen de métricas -->
+        <div id="metrics-summary" class="d-none">
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">Rendimiento Total</h5>
+                            <h3 id="portfolio-performance" class="fw-bold">-</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-secondary">S&P 500</h5>
+                            <h3 id="sp500-performance" class="fw-bold">-</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">Ganancia/Pérdida</h5>
+                            <h3 id="total-gain-loss" class="fw-bold">-</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">Inversión Neta</h5>
+                            <h3 id="net-investment" class="fw-bold">-</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div id="charts-container" class="d-none">
+            <!-- Gráfico de comparación de rendimiento -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Comparación de Rendimiento: Portafolio vs S&P 500</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="performance-comparison-chart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico de evolución del rendimiento porcentual -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Evolución Temporal de Rendimientos: Portafolio vs S&P 500</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="portfolio-evolution-chart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico circular de distribución de inversión -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Distribución de Inversión por Activo</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="investment-distribution-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Rendimiento por Activo</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="asset-performance-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensaje de error -->
+        <div id="error-message" class="alert alert-danger d-none" role="alert">
+            <!-- El mensaje de error se mostrará aquí -->
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(document).ready(function() {
+            let reportData = [];
+            let charts = {};
+
+            $('#btn-generate-report').click(function() {
+                generateReport();
+            });
+
+            $('#btn-export').click(function() {
+                exportCharts();
+            });
+
+            function generateReport() {
+                const fechaInicio = $('#fechaInicio').val();
+                const fechaFin = $('#fechaFin').val();
+
+                if (!fechaInicio || !fechaFin) {
+                    alert('Por favor seleccione ambas fechas');
+                    return;
+                }
+
+                if (new Date(fechaInicio) > new Date(fechaFin)) {
+                    alert('La fecha de inicio no puede ser mayor a la fecha fin');
+                    return;
+                }
+
+                // Mostrar loading
+                $('#loading').removeClass('d-none');
+                $('#charts-container').addClass('d-none');
+                $('#metrics-summary').addClass('d-none');
+                $('#error-message').addClass('d-none');
+                $('#btn-export').prop('disabled', true);
+
+                const requestData = {
+                    fechaInicio: fechaInicio,
+                    fechaFin: fechaFin
+                };
+
+                // Obtener tanto el reporte principal como el diario
+                Promise.all([
+                    $.ajax({
+                        url: '@Url.Action("GetReportData", "Portfolio")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(requestData)
+                    }),
+                    $.ajax({
+                        url: '@Url.Action("GetDailyReportData", "Portfolio")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(requestData)
+                    })
+                ]).then(function([reportResponse, dailyResponse]) {
+                    $('#loading').addClass('d-none');
+
+                    if (reportResponse.success && dailyResponse.success) {
+                        reportData = reportResponse.data;
+                        displayCharts(reportResponse.data, dailyResponse.data);
+                        $('#btn-export').prop('disabled', false);
+                    } else {
+                        showError((reportResponse.error || dailyResponse.error) || 'Error desconocido');
+                    }
+                }).catch(function(error) {
+                    $('#loading').addClass('d-none');
+                    showError('Error al generar el reporte: ' + (error.responseText || error.message || 'Error de conexión'));
+                });
+            }
+
+            function displayCharts(data, dailyData) {
+                // Separar datos del total del portafolio y activos individuales
+                const totalPortafolio = data.find(item => item.tipoReporte === 'TOTAL PORTAFOLIO');
+                const activosIndividuales = data.filter(item => item.tipoReporte === 'RESUMEN POR ACTIVO');
+
+                // Mostrar métricas resumen
+                displayMetrics(totalPortafolio);
+
+                // Crear gráficos
+                createPerformanceComparisonChart(totalPortafolio);
+                createPortfolioEvolutionChart(dailyData);
+                createInvestmentDistributionChart(activosIndividuales);
+                createAssetPerformanceChart(activosIndividuales);
+
+                $('#charts-container').removeClass('d-none');
+                $('#metrics-summary').removeClass('d-none');
+            }
+
+            function displayMetrics(totalPortafolio) {
+                const portfolioPerf = totalPortafolio.porcentajeGananciaPerdida;
+                const sp500Perf = totalPortafolio.sP500Rendimiento;
+                const gainLoss = totalPortafolio.gananciaPerdidaUsd;
+                const netInvestment = totalPortafolio.inversionNeta;
+
+                $('#portfolio-performance').text(formatNumber(portfolioPerf) + '%')
+                    .removeClass('text-success text-danger')
+                    .addClass(portfolioPerf >= 0 ? 'text-success' : 'text-danger');
+
+                $('#sp500-performance').text(formatNumber(sp500Perf) + '%')
+                    .removeClass('text-success text-danger')
+                    .addClass(sp500Perf >= 0 ? 'text-success' : 'text-danger');
+
+                $('#total-gain-loss').text('$' + formatNumber(gainLoss))
+                    .removeClass('text-success text-danger')
+                    .addClass(gainLoss >= 0 ? 'text-success' : 'text-danger');
+
+                $('#net-investment').text('$' + formatNumber(netInvestment));
+            }
+
+            function createPerformanceComparisonChart(totalPortafolio) {
+                const ctx = document.getElementById('performance-comparison-chart').getContext('2d');
+                
+                if (charts.performanceComparison) {
+                    charts.performanceComparison.destroy();
+                }
+
+                charts.performanceComparison = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Mi Portafolio', 'S&P 500'],
+                        datasets: [{
+                            label: 'Rendimiento (%)',
+                            data: [totalPortafolio.porcentajeGananciaPerdida, totalPortafolio.sP500Rendimiento],
+                            backgroundColor: [
+                                totalPortafolio.porcentajeGananciaPerdida >= 0 ? 'rgba(40, 167, 69, 0.8)' : 'rgba(220, 53, 69, 0.8)',
+                                totalPortafolio.sP500Rendimiento >= 0 ? 'rgba(23, 162, 184, 0.8)' : 'rgba(255, 193, 7, 0.8)'
+                            ],
+                            borderColor: [
+                                totalPortafolio.porcentajeGananciaPerdida >= 0 ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)',
+                                totalPortafolio.sP500Rendimiento >= 0 ? 'rgba(23, 162, 184, 1)' : 'rgba(255, 193, 7, 1)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Comparación de Rendimientos'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createPortfolioEvolutionChart(dailyData) {
+                const ctx = document.getElementById('portfolio-evolution-chart').getContext('2d');
+                
+                if (charts.portfolioEvolution) {
+                    charts.portfolioEvolution.destroy();
+                }
+
+                console.log('Daily data received:', dailyData);
+
+                // Preparar datos diarios para el gráfico
+                const labels = [];
+                const portfolioReturns = [];
+                const sp500Returns = [];
+                
+                let portfolioAccumulated = 0;
+                let sp500Accumulated = 0;
+
+                // Agregar punto inicial
+                labels.push('Inicio');
+                portfolioReturns.push(0);
+                sp500Returns.push(0);
+
+                // Procesar datos diarios y calcular rendimientos acumulados
+                dailyData.forEach(function(item) {
+                    console.log('Processing item:', item);
+                    
+                    // La fecha viene como string desde el servidor, parsearla correctamente
+                    let fecha = item.fecha || item.Fecha;
+                    if (!fecha) {
+                        console.error('No fecha found in item:', item);
+                        return;
+                    }
+                    
+                    // Formatear la fecha del día para mejor visualización
+                    const date = new Date(fecha);
+                    if (isNaN(date.getTime())) {
+                        console.error('Invalid date:', fecha);
+                        return;
+                    }
+                    
+                    const dayLabel = date.toLocaleDateString('es-ES', { 
+                        day: '2-digit', 
+                        month: '2-digit',
+                        year: '2-digit'
+                    });
+                    
+                    // Acumular rendimientos (sumar el rendimiento del día)
+                    const porcentaje = item.porcentajeGananciaPerdida || item.PorcentajeGananciaPerdida || 0;
+                    const sp500 = item.sp500Rendimiento || item.SP500Rendimiento || 0;
+                    
+                    portfolioAccumulated += porcentaje;
+                    sp500Accumulated += sp500;
+                    
+                    labels.push(dayLabel);
+                    portfolioReturns.push(portfolioAccumulated);
+                    sp500Returns.push(sp500Accumulated);
+                });
+
+                console.log('Labels:', labels);
+                console.log('Portfolio returns:', portfolioReturns);
+                console.log('SP500 returns:', sp500Returns);
+
+                charts.portfolioEvolution = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Mi Portafolio (%)',
+                                data: portfolioReturns,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                                borderWidth: 3,
+                                fill: false,
+                                tension: 0.4,
+                                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 4,
+                                pointHoverRadius: 6
+                            },
+                            {
+                                label: 'S&P 500 (%)',
+                                data: sp500Returns,
+                                borderColor: 'rgba(255, 159, 64, 1)',
+                                backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                                borderWidth: 3,
+                                fill: false,
+                                tension: 0.4,
+                                pointBackgroundColor: 'rgba(255, 159, 64, 1)',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 4,
+                                pointHoverRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Evolución Temporal de Rendimientos: Portafolio vs S&P 500'
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + formatNumber(context.raw) + '%';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return formatNumber(value) + '%';
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+            }
+
+            function createInvestmentDistributionChart(activosIndividuales) {
+                const ctx = document.getElementById('investment-distribution-chart').getContext('2d');
+                
+                if (charts.investmentDistribution) {
+                    charts.investmentDistribution.destroy();
+                }
+
+                // Calcular la distribución basada en el valor final
+                const totalValue = activosIndividuales.reduce((sum, asset) => sum + Math.abs(asset.tenenciaFinal), 0);
+                const colors = generateColors(activosIndividuales.length);
+
+                charts.investmentDistribution = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: activosIndividuales.map(asset => asset.ticker),
+                        datasets: [{
+                            data: activosIndividuales.map(asset => Math.abs(asset.tenenciaFinal)),
+                            backgroundColor: colors,
+                            borderColor: colors.map(color => color.replace('0.8', '1')),
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Distribución de Activos por Valor'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const percentage = ((context.raw / totalValue) * 100).toFixed(1);
+                                        return context.label + ': $' + formatNumber(context.raw) + ' (' + percentage + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createAssetPerformanceChart(activosIndividuales) {
+                const ctx = document.getElementById('asset-performance-chart').getContext('2d');
+                
+                if (charts.assetPerformance) {
+                    charts.assetPerformance.destroy();
+                }
+
+                charts.assetPerformance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: activosIndividuales.map(asset => asset.ticker),
+                        datasets: [{
+                            label: 'Rendimiento (%)',
+                            data: activosIndividuales.map(asset => asset.porcentajeGananciaPerdida),
+                            backgroundColor: activosIndividuales.map(asset => 
+                                asset.porcentajeGananciaPerdida >= 0 ? 
+                                'rgba(40, 167, 69, 0.8)' : 
+                                'rgba(220, 53, 69, 0.8)'
+                            ),
+                            borderColor: activosIndividuales.map(asset => 
+                                asset.porcentajeGananciaPerdida >= 0 ? 
+                                'rgba(40, 167, 69, 1)' : 
+                                'rgba(220, 53, 69, 1)'
+                            ),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Rendimiento por Activo'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function generateColors(count) {
+                const colors = [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 205, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)',
+                    'rgba(255, 159, 64, 0.8)',
+                    'rgba(199, 199, 199, 0.8)',
+                    'rgba(83, 102, 255, 0.8)'
+                ];
+
+                while (colors.length < count) {
+                    colors.push(`rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.8)`);
+                }
+
+                return colors.slice(0, count);
+            }
+
+            function showError(message) {
+                $('#error-message').text(message).removeClass('d-none');
+            }
+
+            function formatNumber(num) {
+                return new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(num);
+            }
+
+            function exportCharts() {
+                if (Object.keys(charts).length === 0) {
+                    alert('No hay gráficos para exportar');
+                    return;
+                }
+
+                // Crear un canvas combinado
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 1200;
+                canvas.height = 1600;
+
+                // Fondo blanco
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Título
+                ctx.fillStyle = 'black';
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Reporte de Portafolio - ' + $('#fechaInicio').val() + ' al ' + $('#fechaFin').val(), canvas.width / 2, 30);
+
+                // Exportar como imagen
+                const link = document.createElement('a');
+                link.download = `reporte_portafolio_graficos_${$('#fechaInicio').val()}_${$('#fechaFin').val()}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            }
+
+            // Generar reporte inicial
+            generateReport();
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: 1px solid rgba(0, 0, 0, 0.125);
+        }
+
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        }
+
+        .text-success {
+            color: #28a745 !important;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
+        }
+
+        .text-primary {
+            color: #007bff !important;
+        }
+
+        .text-secondary {
+            color: #6c757d !important;
+        }
+
+        .text-info {
+            color: #17a2b8 !important;
+        }
+
+        #metrics-summary .card-body h3 {
+            font-size: 2rem;
+        }
+
+        canvas {
+            max-height: 400px;
+        }
+    </style>
+}

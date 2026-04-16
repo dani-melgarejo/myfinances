@@ -1,43 +1,68 @@
 ﻿@{
-    ViewData["Title"] = "Home";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="row">
-    <div class="col-12">
-        <h1 class="display-4">Bienvenido a Binit Portfolio</h1>
-        <p class="lead">Sistema de gestión de activos financieros</p>
+<div class="dashboard-main-content">
+    <!-- Page Header -->
+    <div class="page-header-container mb-4">
+        <div class="page-header-left">
+            <h1 class="page-title">Dashboard</h1>
+            <nav aria-label="breadcrumb" class="page-breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">ZZ Portfolio Manager</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
 
-        <div class="row mt-4">
-            <div class="col-md-3">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
-                        <h5 class="card-title">Operaciones</h5>
-                        <p class="card-text">Registra compras y ventas de activos</p>
-                        <a asp-controller="Stocks" asp-action="CreateOrEdit" class="btn btn-primary">Ir a Operaciones</a>
-                    </div>
+    <!-- Welcome Section -->
+    <div class="welcome-section mb-4">
+        <div class="welcome-card">
+            <div class="welcome-content">
+                <h2 class="welcome-title">Bienvenido a ZZ Portfolio Manager</h2>
+                <p class="welcome-text">Sistema de gestión de activos financieros. Utiliza el menú lateral para navegar entre las diferentes secciones.</p>
+            </div>
+            <div class="welcome-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <i class="fas fa-info-circle"></i>
+                    <h5>Acceso Rápido</h5>
+                </div>
+                <div class="info-card-body">
+                    <p>Utiliza el menú lateral para acceder a:</p>
+                    <ul class="info-list">
+                        <li><i class="fas fa-plus-circle text-primary"></i> Nueva Operación</li>
+                        <li><i class="fas fa-list text-info"></i> Ver Listado de Movimientos</li>
+                        <li><i class="fas fa-history text-success"></i> Ver Histórico</li>
+                        <li><i class="fas fa-coins text-warning"></i> Gestionar Activos</li>
+                    </ul>
                 </div>
             </div>
+        </div>
 
-            <div class="col-md-3">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <i class="fas fa-history fa-3x text-success mb-3"></i>
-                        <h5 class="card-title">Histórico</h5>
-                        <p class="card-text">Consulta datos históricos</p>
-                        <a asp-controller="Historic" asp-action="Index" class="btn btn-success">Ver Histórico</a>
-                    </div>
+        <div class="col-md-6">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <i class="fas fa-chart-bar"></i>
+                    <h5>Reportes y Análisis</h5>
                 </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <i class="fas fa-coins fa-3x text-warning mb-3"></i>
-                        <h5 class="card-title">Activos</h5>
-                        <p class="card-text">Gestiona tus activos</p>
-                        <a asp-controller="Asset" asp-action="Index" class="btn btn-warning">Gestionar Activos</a>
-                    </div>
+                <div class="info-card-body">
+                    <p>Accede a herramientas avanzadas:</p>
+                    <ul class="info-list">
+                        <li><i class="fas fa-chart-pie text-secondary"></i> Reporte de Portafolio</li>
+                        <li><i class="fas fa-chart-line text-primary"></i> Gráficos de Tendencias</li>
+                        <li><i class="fas fa-chart-area text-info"></i> Market Data</li>
+                        <li><i class="fas fa-search text-success"></i> Cotizaciones Yahoo</li>
+                    </ul>
                 </div>
             </div>
         </div>
