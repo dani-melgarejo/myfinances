@@ -563,4 +563,143 @@ public class PortfolioReportService(
         var usdCurrency = await _currencyService.GetDefaultCurrencyAsync();
         return (usdCurrency?.Id ?? 1, usdCurrency?.Code ?? "USD", usdCurrency?.Symbol ?? "$");
     }
+
+    public async Task<IEnumerable<PortfolioChartComparisonViewModel>> GetPortfolioChartComparisonAsync(DateTime fechaInicio, DateTime fechaFin, string userId, int? targetCurrencyId = null)
+    {
+        try
+        {
+            var targetCurrency = await GetTargetCurrencyAsync(targetCurrencyId);
+
+            var sql = @"
+            DECLARE @fecha_inicio DATE = {0};
+            DECLARE @fecha_fin DATE = {1};
+            DECLARE @target_currency_id INT = {2};
+            DECLARE @user_id NVARCHAR(450) = {3};
+ 
+            -- CTE para obtener las tasas de cambio más recientes
+            WITH ExchangeRates AS (
+                SELECT 
+                    c1.Id as FromCurrencyId,
+                    c2.Id as ToCurrencyId,
+                    CASE 
+                        WHEN c1.Id = @target_currency_id THEN 1.0
+                        WHEN c1.Code = 'USD' AND c2.Id = @target_currency_id THEN 
+                            ISNULL((SELECT TOP 1 Rate FROM currency_exchange_rates cer WHERE cer.from_currency_id = c1.Id AND cer.to_currency_id = c2.Id AND cer.IsLatest = 1), 1.0)
+                        WHEN c2.Code = 'USD' AND c1.Id != (SELECT Id FROM currencies WHERE Code = 'USD') THEN
+                            CASE 
+                                WHEN ISNULL((SELECT TOP 1 Rate FROM currency_exchange_rates cer WHERE cer.from_currency_id = (SELECT Id FROM currencies WHERE Code = 'USD') AND cer.to_currency_id = c1.Id AND cer.IsLatest = 1), 0) > 0
+                                THEN 1.0 / (SELECT TOP 1 Rate FROM currency_exchange_rates cer WHERE cer.from_currency_id = (SELECT Id FROM currencies WHERE Code = 'USD') AND cer.to_currency_id = c1.Id AND cer.IsLatest = 1)
+                                ELSE 1.0
+                            END
+                        ELSE 
+                            CASE 
+                                WHEN c1.Code = 'USD' THEN 1.0
+                                ELSE 
+                                    CASE 
+                                        WHEN ISNULL((SELECT TOP 1 Rate FROM currency_exchange_rates cer1 WHERE cer1.from_currency_id = (SELECT Id FROM currencies WHERE Code = 'USD') AND cer1.to_currency_id = c1.Id AND cer1.IsLatest = 1), 0) > 0
+                                        AND ISNULL((SELECT TOP 1 Rate FROM currency_exchange_rates cer2 WHERE cer2.from_currency_id = (SELECT Id FROM currencies WHERE Code = 'USD') AND cer2.to_currency_id = @target_currency_id AND cer2.IsLatest = 1), 0) > 0
+                                        THEN (1.0 / (SELECT TOP 1 Rate FROM currency_exchange_rates cer1 WHERE cer1.from_currency_id = (SELECT Id FROM currencies WHERE Code = 'USD') AND cer1.to_currency_id = c1.Id AND cer1.IsLatest = 1)) *
+                                             (SELECT TOP 1 Rate FROM currency_exchange_rates cer2 WHERE cer2.from_currency_id = (SELECT Id FROM currencies WHERE Code = 'USD') AND cer2.to_currency_id = @target_currency_id AND cer2.IsLatest = 1)
+                                        ELSE 1.0
+                                    END
+                            END
+                    END AS ExchangeRate
+                FROM currencies c1
+                CROSS JOIN currencies c2
+                WHERE c2.Id = @target_currency_id
+            ),
+            -- Obtener todas las fechas con datos de posesiones
+            AllDates AS (
+                SELECT DISTINCT CAST(p.Date AS DATE) AS Fecha
+                FROM possessions p
+                WHERE p.UserId = @user_id
+                AND p.Date >= @fecha_inicio AND p.Date <= @fecha_fin
+            ),
+            -- Valor inicial del portafolio (antes del período)
+            ValorInicialPortfolio AS (
+                SELECT ISNULL(SUM(p.TotalPrice * ISNULL(er.ExchangeRate, 1.0)), 0) AS ValorInicial
+                FROM possessions p
+                LEFT JOIN ExchangeRates er ON er.FromCurrencyId = ISNULL(p.currency_id, (SELECT Id FROM currencies WHERE Code = 'USD'))
+                WHERE p.UserId = @user_id
+                AND p.Date < @fecha_inicio
+                AND p.Date = (SELECT MAX(p2.Date) FROM possessions p2 WHERE p2.UserId = @user_id AND p2.Date < @fecha_inicio)
+            ),
+            -- Valor del portafolio por cada día y movimientos acumulados desde el inicio
+            PortfolioDiario AS (
+                SELECT 
+                    ad.Fecha,
+                    ISNULL((SELECT SUM(p.TotalPrice * ISNULL(er.ExchangeRate, 1.0))
+                            FROM possessions p
+                            LEFT JOIN ExchangeRates er ON er.FromCurrencyId = ISNULL(p.currency_id, (SELECT Id FROM currencies WHERE Code = 'USD'))
+                            WHERE p.UserId = @user_id 
+                            AND CAST(p.Date AS DATE) = ad.Fecha), 0) AS ValorPortafolio,
+                    ISNULL((SELECT SUM(CASE WHEN m.Operation = 0 THEN m.Quantity * m.Price * ISNULL(er.ExchangeRate, 1.0)
+                                            ELSE -m.Quantity * m.Price * ISNULL(er.ExchangeRate, 1.0) END)
+                            FROM movements m
+                            LEFT JOIN ExchangeRates er ON er.FromCurrencyId = ISNULL(m.currency_id, (SELECT Id FROM currencies WHERE Code = 'USD'))
+                            WHERE m.UserId = @user_id
+                            AND m.Date >= @fecha_inicio AND m.Date <= ad.Fecha), 0) AS InversionNetaAcumulada
+                FROM AllDates ad
+                WHERE (SELECT ValorInicial FROM ValorInicialPortfolio) > 0 
+                   OR (SELECT COUNT(*) FROM movements m WHERE m.UserId = @user_id AND m.Date >= @fecha_inicio AND m.Date <= ad.Fecha) > 0
+            ),
+            -- Valor inicial del SP500 (antes del período)
+            SP500Inicial AS (
+                SELECT TOP 1 [Close] AS Valor
+                FROM stocks_data sd
+                INNER JOIN assets a ON sd.asset_id = a.Id
+                WHERE a.Ticker = '^GSPC'
+                AND sd.Date < @fecha_inicio
+                ORDER BY sd.Date DESC
+            ),
+            -- SP500 por día - solo días donde realmente hay cotización
+            SP500Diario AS (
+                SELECT 
+                    CAST(sd.Date AS DATE) AS Fecha,
+                    sd.[Close] AS ValorSP500
+                FROM stocks_data sd
+                INNER JOIN assets a ON sd.asset_id = a.Id
+                WHERE a.Ticker = '^GSPC'
+                AND sd.Date >= @fecha_inicio 
+                AND sd.Date <= @fecha_fin
+            ),
+            -- Fechas válidas: solo días donde hay datos del SP500
+            FechasValidas AS (
+                SELECT DISTINCT Fecha
+                FROM SP500Diario
+            )
+
+            -- Resultado final - solo días con cotización del SP500
+            SELECT 
+                pd.Fecha,
+                -- Portfolio: (ValorActual - ValorInicial - InversionNeta) / (ValorInicial + InversionNeta) * 100
+                CASE 
+                    WHEN (SELECT ValorInicial FROM ValorInicialPortfolio) + pd.InversionNetaAcumulada > 0 THEN
+                        ((pd.ValorPortafolio - (SELECT ValorInicial FROM ValorInicialPortfolio) - pd.InversionNetaAcumulada) * 100) /
+                        ((SELECT ValorInicial FROM ValorInicialPortfolio) + pd.InversionNetaAcumulada)
+                    ELSE 0
+                END AS PortfolioRendimientoAcumulado,
+                -- SP500: ((Actual - Inicial) / Inicial) * 100
+                CASE 
+                    WHEN (SELECT Valor FROM SP500Inicial) > 0 THEN
+                        ((sp.ValorSP500 - (SELECT Valor FROM SP500Inicial)) / (SELECT Valor FROM SP500Inicial)) * 100
+                    ELSE 0
+                END AS SP500RendimientoAcumulado
+            FROM PortfolioDiario pd
+            INNER JOIN SP500Diario sp ON pd.Fecha = sp.Fecha
+            WHERE pd.ValorPortafolio > 0 OR (SELECT ValorInicial FROM ValorInicialPortfolio) > 0
+            ORDER BY pd.Fecha";
+
+            var results = await _context.Database
+                .SqlQueryRaw<PortfolioChartComparisonViewModel>(sql, fechaInicio.Date, fechaFin.Date, targetCurrency.Id, userId)
+                .ToListAsync();
+
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generando gráfico de comparación de portafolio");
+            throw;
+        }
+    }
 }

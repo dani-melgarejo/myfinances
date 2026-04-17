@@ -61,3 +61,10 @@ public class DailyPortfolioReportViewModel
     public string CurrencyCode { get; set; } = "USD";
     public string CurrencySymbol { get; set; } = "$";
 }
+
+public class PortfolioChartComparisonViewModel
+{
+    public DateTime Fecha { get; set; }
+    public decimal PortfolioRendimientoAcumulado { get; set; }
+    public decimal SP500RendimientoAcumulado { get; set; }
+}

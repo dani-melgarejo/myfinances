@@ -2,7 +2,7 @@
 @model PortfolioReportRequestViewModel
 
 @{
-    ViewData["Title"] = "Evolución del Portafolio";
+    ViewData["Title"] = "Evolución del Portafolio vs S&P 500";
 }
 
 <div class="dashboard-main-content">
@@ -10,7 +10,7 @@
     <div class="page-header-container mb-4">
         <div class="page-header-content">
             <div class="page-header-left">
-                <h1 class="page-title">Evolución del Portafolio</h1>
+                <h1 class="page-title">Evolución del Portafolio vs S&P 500</h1>
                 <nav aria-label="breadcrumb" class="page-breadcrumb">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">ZZ Portfolio Manager</a></li>
@@ -73,11 +73,11 @@
 
     <!-- Resumen de métricas -->
     <div id="metrics-summary" class="row g-3 mb-4 d-none">
-        <div class="col-12 col-sm-6 col-lg-3">
+        <div class="col-12 col-sm-6 col-lg-6">
             <div class="metric-card">
                 <div class="metric-card-body">
                     <div class="metric-header">
-                        <div class="metric-title">RENDIMIENTO PORTAFOLIO</div>
+                        <div class="metric-title">RENDIMIENTO ACUMULADO PORTAFOLIO</div>
                         <div class="metric-icon">
                             <i class="fas fa-chart-line"></i>
                         </div>
@@ -90,11 +90,11 @@
             </div>
         </div>
 
-        <div class="col-12 col-sm-6 col-lg-3">
+        <div class="col-12 col-sm-6 col-lg-6">
             <div class="metric-card">
                 <div class="metric-card-body">
                     <div class="metric-header">
-                        <div class="metric-title">RENDIMIENTO S&P 500</div>
+                        <div class="metric-title">RENDIMIENTO ACUMULADO S&P 500</div>
                         <div class="metric-icon">
                             <i class="fas fa-chart-area"></i>
                         </div>
@@ -106,40 +106,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="col-12 col-sm-6 col-lg-3">
-            <div class="metric-card">
-                <div class="metric-card-body">
-                    <div class="metric-header">
-                        <div class="metric-title">GANANCIA/PÉRDIDA</div>
-                        <div class="metric-icon">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                    </div>
-                    <div class="metric-value" id="total-gain-loss">$0.00</div>
-                    <div class="metric-badge" id="gain-loss-badge">
-                        <span class="badge-text">En el período</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-sm-6 col-lg-3">
-            <div class="metric-card">
-                <div class="metric-card-body">
-                    <div class="metric-header">
-                        <div class="metric-title">INVERSIÓN NETA</div>
-                        <div class="metric-icon">
-                            <i class="fas fa-wallet"></i>
-                        </div>
-                    </div>
-                    <div class="metric-value" id="net-investment">$0.00</div>
-                    <div class="metric-badge metric-badge-neutral">
-                        <span class="badge-text">Capital invertido</span>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Gráfico de Evolución -->
@@ -147,7 +113,7 @@
         <div class="data-card">
             <div class="data-card-header">
                 <div class="data-card-title">
-                    <i class="fas fa-chart-line me-2"></i> Evolución Temporal de Rendimientos: Portafolio vs S&P 500
+                    <i class="fas fa-chart-line me-2"></i> Rendimiento Diario Acumulado: Portafolio vs S&P 500
                 </div>
             </div>
             <div class="data-card-body p-4">
@@ -202,7 +168,7 @@
                 };
 
                 $.ajax({
-                    url: '@Url.Action("GetDailyReportData", "Portfolio")',
+                    url: '@Url.Action("GetChartComparisonData", "Portfolio")',
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(requestData),
@@ -210,6 +176,7 @@
                         $('#loading').addClass('d-none');
 
                         if (response.success && response.data && response.data.length > 0) {
+                            console.log('Data received:', response.data[0]);
                             displayChart(response.data);
                             calculateAndDisplayMetrics(response.data);
                             $('#btn-export').prop('disabled', false);
@@ -224,26 +191,22 @@
                 });
             }
 
-            function calculateAndDisplayMetrics(dailyData) {
-                if (dailyData.length === 0) return;
+            function calculateAndDisplayMetrics(data) {
+                if (data.length === 0) return;
 
-                // Calcular rendimientos acumulados
-                let portfolioAccum = 0;
-                let sp500Accum = 0;
-                let totalGainLoss = 0;
-                let netInvestment = 0;
+                // Obtener los rendimientos acumulados finales
+                const lastItem = data[data.length - 1];
+                
+                // Probar diferentes variaciones de nombres de propiedades (camelCase y PascalCase)
+                const portfolioAccum = lastItem.portfolioRendimientoAcumulado || 
+                                      lastItem.PortfolioRendimientoAcumulado || 0;
+                const sp500Accum = lastItem.sp500RendimientoAcumulado || 
+                                  lastItem.SP500RendimientoAcumulado || 
+                                  lastItem.sP500RendimientoAcumulado || 0;
 
-                dailyData.forEach(function(item) {
-                    const porcentaje = item.porcentajeGananciaPerdida || item.PorcentajeGananciaPerdida || 0;
-                    const sp500 = item.sp500Rendimiento || item.SP500Rendimiento || 0;
-                    const ganancia = item.gananciaPerdidaUsd || item.GananciaPerdidaUsd || 0;
-                    const inversion = item.inversionNeta || item.InversionNeta || 0;
-
-                    portfolioAccum = porcentaje; // Usar el último valor acumulado
-                    sp500Accum = sp500;
-                    totalGainLoss = ganancia;
-                    netInvestment = inversion;
-                });
+                console.log('Last item:', lastItem);
+                console.log('Portfolio Acum:', portfolioAccum);
+                console.log('SP500 Acum:', sp500Accum);
 
                 // Actualizar métricas
                 $('#portfolio-performance').text(formatNumber(portfolioAccum, 2) + '%')
@@ -262,20 +225,10 @@
                     .removeClass('metric-badge-success metric-badge-danger metric-badge-neutral')
                     .addClass(sp500Accum >= 0 ? 'metric-badge-success' : 'metric-badge-danger');
 
-                $('#total-gain-loss').text('$' + formatNumber(totalGainLoss, 2))
-                    .removeClass('text-success text-danger')
-                    .addClass(totalGainLoss >= 0 ? 'text-success' : 'text-danger');
-
-                $('#gain-loss-badge')
-                    .removeClass('metric-badge-success metric-badge-danger metric-badge-neutral')
-                    .addClass(totalGainLoss >= 0 ? 'metric-badge-success' : 'metric-badge-danger');
-
-                $('#net-investment').text('$' + formatNumber(netInvestment, 2));
-
                 $('#metrics-summary').removeClass('d-none');
             }
 
-            function displayChart(dailyData) {
+            function displayChart(data) {
                 const ctx = document.getElementById('portfolio-evolution-chart').getContext('2d');
                 
                 if (chart) {
@@ -287,12 +240,19 @@
                 const portfolioReturns = [];
                 const sp500Returns = [];
 
-                dailyData.forEach(function(item) {
-                    let fecha = item.fecha || item.Fecha;
-                    if (!fecha) return;
+                data.forEach(function(item, index) {
+                    // Probar diferentes variaciones de nombres de propiedades
+                    const fecha = item.fecha || item.Fecha;
+                    if (!fecha) {
+                        console.log('No fecha found in item:', item);
+                        return;
+                    }
 
                     const date = new Date(fecha);
-                    if (isNaN(date.getTime())) return;
+                    if (isNaN(date.getTime())) {
+                        console.log('Invalid date:', fecha);
+                        return;
+                    }
 
                     const dayLabel = date.toLocaleDateString('es-ES', { 
                         day: '2-digit', 
@@ -300,13 +260,26 @@
                         year: '2-digit'
                     });
 
-                    const porcentaje = item.porcentajeGananciaPerdida || item.PorcentajeGananciaPerdida || 0;
-                    const sp500 = item.sp500Rendimiento || item.SP500Rendimiento || 0;
+                    // Probar diferentes variaciones de nombres de propiedades
+                    const portfolioAccum = item.portfolioRendimientoAcumulado || 
+                                          item.PortfolioRendimientoAcumulado || 0;
+                    const sp500Accum = item.sp500RendimientoAcumulado || 
+                                      item.SP500RendimientoAcumulado || 
+                                      item.sP500RendimientoAcumulado || 0;
+
+                    if (index === 0) {
+                        console.log('First item properties:', Object.keys(item));
+                        console.log('Portfolio value:', portfolioAccum);
+                        console.log('SP500 value:', sp500Accum);
+                    }
 
                     labels.push(dayLabel);
-                    portfolioReturns.push(porcentaje);
-                    sp500Returns.push(sp500);
+                    portfolioReturns.push(portfolioAccum);
+                    sp500Returns.push(sp500Accum);
                 });
+
+                console.log('Portfolio returns:', portfolioReturns.slice(0, 5));
+                console.log('SP500 returns:', sp500Returns.slice(0, 5));
 
                 chart = new Chart(ctx, {
                     type: 'line',

@@ -148,4 +148,26 @@ public class PortfolioController(
             return Json(new { success = false, error = "Error al generar el reporte diario: " + ex.Message });
         }
     }
+
+    [HttpPost]
+    public async Task<IActionResult> GetChartComparisonData([FromBody] PortfolioReportRequestViewModel request)
+    {
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var data = await _portfolioReportService.GetPortfolioChartComparisonAsync(
+                request.FechaInicio, 
+                request.FechaFin,
+                user.Id,
+                request.TargetCurrencyId);
+
+            return Json(new { success = true, data });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, error = "Error al generar el gráfico de comparación: " + ex.Message });
+        }
+    }
 }
