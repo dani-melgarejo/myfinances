@@ -1,4 +1,4 @@
-<!-- Views/Shared/_Layout.cshtml -->
+ï»¿<!-- Views/Shared/_Layout.cshtml -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -45,7 +45,6 @@
                                 <a asp-controller="Home" asp-action="Index" class="sidebar-nav-link">
                                     <i class="fas fa-home"></i>
                                     <span class="nav-text">Dashboard</span>
-                                    <span class="badge-count">01</span>
                                 </a>
                             </li>
                         </ul>
@@ -58,7 +57,7 @@
                             <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Stocks" && ViewContext.RouteData.Values["Action"]?.ToString() == "CreateOrEdit" ? "active" : "")">
                                 <a asp-controller="Stocks" asp-action="CreateOrEdit" class="sidebar-nav-link">
                                     <i class="fas fa-plus-circle"></i>
-                                    <span class="nav-text">Nueva Operación</span>
+                                    <span class="nav-text">Nueva OperaciÃ³n</span>
                                 </a>
                             </li>
                             <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Stocks" && ViewContext.RouteData.Values["Action"]?.ToString() != "CreateOrEdit" ? "active" : "")">
@@ -70,7 +69,7 @@
                             <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Historic" ? "active" : "")">
                                 <a asp-controller="Historic" asp-action="Index" class="sidebar-nav-link">
                                     <i class="fas fa-history"></i>
-                                    <span class="nav-text">Ver Histórico</span>
+                                    <span class="nav-text">Ver HistÃ³rico</span>
                                 </a>
                             </li>
                             <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Asset" ? "active" : "")">
@@ -95,7 +94,7 @@
                             <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Portfolio" && ViewContext.RouteData.Values["Action"]?.ToString() == "ChartReport" ? "active" : "")">
                                 <a asp-controller="Portfolio" asp-action="ChartReport" class="sidebar-nav-link">
                                     <i class="fas fa-chart-line"></i>
-                                    <span class="nav-text">Gráficos Portafolio</span>
+                                    <span class="nav-text">GrÃ¡ficos Portafolio</span>
                                 </a>
                             </li>
                             <li class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "MarketData" ? "active" : "")">
@@ -120,7 +119,7 @@
                             <li class="sidebar-nav-item">
                                 <a href="#" class="sidebar-nav-link" id="menu-complete-historic">
                                     <i class="fas fa-download"></i>
-                                    <span class="nav-text">Completar Histórico</span>
+                                    <span class="nav-text">Completar HistÃ³rico</span>
                                 </a>
                             </li>
                             <li class="sidebar-nav-item">
@@ -156,22 +155,6 @@
                             <i class="fas fa-expand"></i>
                         </button>
 
-                        <!-- Search -->
-                        <button class="nav-icon-btn" title="Buscar">
-                            <i class="fas fa-search"></i>
-                        </button>
-
-                        <!-- Language/Country -->
-                        <button class="nav-icon-btn" title="Idioma">
-                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='24'%3E%3Crect width='32' height='24' fill='%233C3B6E'/%3E%3Cpath d='M0 0h32v2H0zm0 4h32v2H0zm0 4h32v2H0zm0 4h32v2H0zm0 4h32v2H0zm0 4h32v2H0z' fill='%23B22234'/%3E%3Crect width='13' height='14' fill='%233C3B6E'/%3E%3C/svg%3E" alt="US" style="width: 20px; height: 15px;">
-                        </button>
-
-                        <!-- Notifications -->
-                        <div class="nav-icon-btn notification-btn">
-                            <i class="fas fa-bell"></i>
-                            <span class="notification-badge">2</span>
-                        </div>
-
                         <!-- Dark Mode Toggle -->
                         <button class="nav-icon-btn" id="darkModeToggle" title="Modo oscuro">
                             <i class="fas fa-moon"></i>
@@ -195,15 +178,7 @@
                                     <a href="#" class="dropdown-item">
                                         <i class="fas fa-user"></i>
                                         <span>My Account</span>
-                                    </a>
-                                    <a href="#" class="dropdown-item">
-                                        <i class="fas fa-cog"></i>
-                                        <span>Settings</span>
-                                    </a>
-                                    <a href="#" class="dropdown-item">
-                                        <i class="fas fa-lock"></i>
-                                        <span>Lock Screen</span>
-                                    </a>
+                                    </a>                                    
                                     <div class="dropdown-divider"></div>
                                     <form method="post" asp-controller="Account" asp-action="Logout">
                                         <button type="submit" class="dropdown-item logout-item">
@@ -219,7 +194,7 @@
 
                 <!-- Alert container for notifications -->
                 <div id="alert-container" class="alert-container">
-                    <!-- Las alertas se mostrarán aquí dinámicamente -->
+                    <!-- Las alertas se mostrarÃ¡n aquÃ­ dinÃ¡micamente -->
                 </div>
 
                 <!-- Page Content -->
@@ -232,12 +207,12 @@
                     <div class="footer-content">
                         <div class="footer-left">
                             <small class="text-muted">
-                                © 2024 ZZ Portfolio Manager - Sistema de gestión de activos financieros
+                                Â© 2024 ZZ Portfolio Manager - Sistema de gestiÃ³n de activos financieros
                             </small>
                         </div>
                         <div class="footer-right">
                             <small class="text-muted">
-                                <i class="fas fa-clock"></i> Última actualización: <span id="last-update">--</span>
+                                <i class="fas fa-clock"></i> Ãšltima actualizaciÃ³n: <span id="last-update">--</span>
                             </small>
                         </div>
                     </div>
@@ -322,7 +297,7 @@
         });
 
         function completeHistoric() {
-            showAlert('info', 'Completando datos históricos...', 'fas fa-spinner fa-spin');
+            showAlert('info', 'Completando datos histÃ³ricos...', 'fas fa-spinner fa-spin');
 
             $.post('@Url.Action("CompleteAllAssets", "Historic")')
                 .done(function(response) {
@@ -333,7 +308,7 @@
                     }
                 })
                 .fail(function() {
-                    showAlert('danger', 'Error al completar histórico', 'fas fa-exclamation-triangle');
+                    showAlert('danger', 'Error al completar histÃ³rico', 'fas fa-exclamation-triangle');
                 });
         }
 
@@ -386,7 +361,7 @@
 
             $('#alert-container').append(alertHtml);
 
-            // Auto-dismiss después de 5 segundos (excepto para loading)
+            // Auto-dismiss despuÃ©s de 5 segundos (excepto para loading)
             if (type !== 'info' || !icon.includes('fa-spin')) {
                 setTimeout(function() {
                     $(`#${alertId}`).alert('close');
