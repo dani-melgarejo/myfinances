@@ -56,7 +56,7 @@ public class AccountController : Controller
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
-                // Registration successful
+                await _signInManager.SignInAsync(user, isPersistent: false);
                 return RedirectToAction("Index", "Home");
             }
             foreach (var error in result.Errors)
@@ -73,5 +73,136 @@ public class AccountController : Controller
     {
         await _signInManager.SignOutAsync();
         return RedirectToAction("Index", "Home");
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> Settings()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return RedirectToAction("Login");
+        }
+
+        var model = new SettingsViewModel
+        {
+            Id = user.Id,
+            Name = user.Name ?? string.Empty,
+            UserName = user.UserName ?? string.Empty,
+            CurrentUserName = user.UserName ?? string.Empty
+        };
+
+        return View(model);
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Settings(SettingsViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            model.CurrentUserName = model.UserName;
+            return View(model);
+        }
+
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return RedirectToAction("Login");
+        }
+
+        try
+        {
+            bool hasChanges = false;
+
+            // Actualizar nombre
+            if (user.Name != model.Name)
+            {
+                user.Name = model.Name;
+                hasChanges = true;
+            }
+
+            // Actualizar email/username si cambió
+            if (user.UserName != model.UserName)
+            {
+                // Verificar que el nuevo username no exista
+                var existingUser = await _userManager.FindByNameAsync(model.UserName);
+                if (existingUser != null && existingUser.Id != user.Id)
+                {
+                    ModelState.AddModelError("UserName", "This email is already taken.");
+                    model.CurrentUserName = user.UserName ?? string.Empty;
+                    return View(model);
+                }
+
+                var setUserNameResult = await _userManager.SetUserNameAsync(user, model.UserName);
+                if (!setUserNameResult.Succeeded)
+                {
+                    foreach (var error in setUserNameResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    model.CurrentUserName = user.UserName ?? string.Empty;
+                    return View(model);
+                }
+                hasChanges = true;
+            }
+
+            // Actualizar contraseña si se proporcionó
+            if (!string.IsNullOrWhiteSpace(model.NewPassword))
+            {
+                if (string.IsNullOrWhiteSpace(model.CurrentPassword))
+                {
+                    ModelState.AddModelError("CurrentPassword", "Current password is required to change your password.");
+                    model.CurrentUserName = user.UserName ?? string.Empty;
+                    return View(model);
+                }
+
+                var changePasswordResult = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+                if (!changePasswordResult.Succeeded)
+                {
+                    foreach (var error in changePasswordResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    model.CurrentUserName = user.UserName ?? string.Empty;
+                    return View(model);
+                }
+                hasChanges = true;
+            }
+
+            // Guardar cambios de nombre si hubo
+            if (hasChanges)
+            {
+                var updateResult = await _userManager.UpdateAsync(user);
+                if (updateResult.Succeeded)
+                {
+                    await _signInManager.RefreshSignInAsync(user);
+                    TempData["Success"] = "Your profile has been updated successfully.";
+                }
+                else
+                {
+                    foreach (var error in updateResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    model.CurrentUserName = user.UserName ?? string.Empty;
+                    return View(model);
+                }
+            }
+            else
+            {
+                TempData["Info"] = "No changes were made.";
+            }
+
+            return RedirectToAction("Settings");
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, $"An error occurred: {ex.Message}");
+            model.CurrentUserName = user.UserName ?? string.Empty;
+            return View(model);
+        }
     }
 }

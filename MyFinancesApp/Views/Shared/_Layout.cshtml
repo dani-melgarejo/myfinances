@@ -175,9 +175,9 @@
                                     <div class="dropdown-welcome">Welcome !</div>
                                 </div>
                                 <div class="user-dropdown-body">
-                                    <a href="#" class="dropdown-item">
-                                        <i class="fas fa-user"></i>
-                                        <span>My Account</span>
+                                    <a asp-controller="Account" asp-action="Settings" class="dropdown-item">
+                                        <i class="fas fa-cog"></i>
+                                        <span>Settings</span>
                                     </a>                                    
                                     <div class="dropdown-divider"></div>
                                     <form method="post" asp-controller="Account" asp-action="Logout">
